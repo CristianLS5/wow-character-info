@@ -1,0 +1,13 @@
+@if (characterService.loading()) {
+<p>Loading character...</p>
+} @else if (characterService.error()) {
+<p class="text-red-500">Error: {{ characterService.error() }}</p>
+} @else if (characterService.character()) {
+<div class="p-4">
+    <h2 class="text-2xl font-bold mb-4">{{ characterService.character()?.name }}</h2>
+    <p>Level: {{ characterService.character()?.level }}</p>
+    <p>Class: {{ characterService.character()?.character_class?.name }}</p>
+    <p>Race: {{ characterService.character()?.race?.name }}</p>
+    <!-- Add more character details as needed -->
+</div>
+}
