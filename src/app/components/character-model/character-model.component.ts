@@ -13,8 +13,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 @Component({
   selector: 'app-character-model',
   standalone: true,
-  template: '<canvas #rendererCanvas></canvas>',
-  styles: ['canvas { width: 100%; height: 400px; }'],
+  templateUrl: './character-model.component.html',
+  styleUrl: './character-model.component.sass',
 })
 export class CharacterModelComponent {
   @ViewChild('rendererCanvas', { static: true })

@@ -1,18 +1,17 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, tap } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { catchError, finalize, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
 
-interface Character {
-  name: string;
-  level: number;
-  character_class: {
+interface CharacterEquipment {
+  equipped_items: Array<{
     name: string;
-  };
-  race: {
-    name: string;
-  };
-  // Add more properties as needed
+    quality: { type: string; name: string };
+    level: { value: number; display_string: string };
+    item: { id: number };
+    slot: { type: string; name: string };
+    iconUrl?: string;
+  }>;
 }
 
 @Injectable({
@@ -20,45 +19,42 @@ interface Character {
 })
 export class CharacterService {
   private apiUrl = 'http://localhost:3000/api';
-  private characterSignal = signal<Character | null>(null);
+
   private loadingSignal = signal<boolean>(false);
+  private characterEquipmentSignal = signal<CharacterEquipment | null>(null);
   private errorSignal = signal<string | null>(null);
 
-  character = computed(() => this.characterSignal());
   loading = computed(() => this.loadingSignal());
   error = computed(() => this.errorSignal());
 
   constructor(private http: HttpClient) {}
 
-  getCharacter(realm: string, characterName: string) {
+  getCharacterEquipment(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterEquipment> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/equipment`;
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
-    this.http
-      .get<Character>(`${this.apiUrl}/character/${realm}/${characterName}`)
-      .pipe(
-        tap(() => this.loadingSignal.set(false)),
-        catchError(this.handleError)
-      )
-      .subscribe({
-        next: (data) => this.characterSignal.set(data),
-        error: (error) => {
-          this.loadingSignal.set(false);
-          this.errorSignal.set(error);
-        },
-      });
+    return this.http.get<CharacterEquipment>(url).pipe(
+      tap((data) => {
+        console.log('Received character equipment data:', data);
+        this.characterEquipmentSignal.set(data);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        const errorMessage = `Error fetching character equipment: ${error.message}`;
+        console.error(errorMessage, error);
+        this.errorSignal.set(errorMessage);
+        return throwError(() => new Error(errorMessage));
+      }),
+      finalize(() => {
+        this.loadingSignal.set(false);
+      })
+    );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'An unknown error occurred';
-    if (error.error instanceof ErrorEvent) {
-      // Client-side or network error
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // Backend returned an unsuccessful response code
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-    }
-    console.error(errorMessage);
-    return throwError(() => errorMessage);
+  get characterEquipment() {
+    return this.characterEquipmentSignal.asReadonly();
   }
 }

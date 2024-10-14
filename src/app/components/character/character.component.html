@@ -1,13 +1,74 @@
-@if (characterService.loading()) {
-<p>Loading character...</p>
-} @else if (characterService.error()) {
-<p class="text-red-500">Error: {{ characterService.error() }}</p>
-} @else if (characterService.character()) {
 <div class="p-4">
-    <h2 class="text-2xl font-bold mb-4">{{ characterService.character()?.name }}</h2>
-    <p>Level: {{ characterService.character()?.level }}</p>
-    <p>Class: {{ characterService.character()?.character_class?.name }}</p>
-    <p>Race: {{ characterService.character()?.race?.name }}</p>
-    <!-- Add more character details as needed -->
+    <button (click)="authenticate()"
+        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
+        Authenticate with Battle.net
+    </button>
+
+    <form (ngSubmit)="fetchCharacter()" class="mb-4">
+        <div class="mb-2">
+            <label for="realm" class="block text-sm font-medium text-gray-700">Realm:</label>
+            <input type="text" id="realm" [(ngModel)]="realm" name="realm" required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+        </div>
+        <div class="mb-2">
+            <label for="characterName" class="block text-sm font-medium text-gray-700">Character Name:</label>
+            <input type="text" id="characterName" [(ngModel)]="characterName" name="characterName" required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+        </div>
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Fetch Character
+        </button>
+    </form>
+
+    @if (characterService.loading()) {
+    <div class="flex justify-center items-center h-32">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+    } @else if (characterService.error()) {
+    <p class="text-red-500">Error: {{ characterService.error() }}</p>
+    } @else if (characterEquipment) {
+    <div class="p-4">
+        <div class="mt-4">
+            <h3 class="text-xl font-bold mb-2">Character Equipment</h3>
+            @if (hasEquippedItems) {
+            <div class="mb-4">
+                <h4 class="text-lg font-semibold">Average Item Level: {{ getAverageItemLevel() }}</h4>
+            </div>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                @for (item of characterEquipment.equipped_items; track $index) {
+                <li class="bg-gray-100 p-4 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 mr-4 flex items-center justify-center bg-gray-200">
+                            @if (item.iconUrl) {
+                            <img [src]="item.iconUrl" [alt]="item.name" class="w-full h-full object-cover"
+                                (error)="onImageError($event, item)">
+                            } @else {
+                            <span class="text-xs text-gray-500">No icon</span>
+                            }
+                        </div>
+                        <div>
+                            <strong>{{ item.slot.name || 'Unknown Slot' }}</strong>
+                            <br>
+                            <span class="text-sm font-medium">{{ item.name || 'Unknown Item' }}</span>
+                            <br>
+                            <span class="text-sm text-gray-600">
+                                Item Level: {{ item.level.value || 'N/A' }}
+                            </span>
+                            <br>
+                            <span class="text-xs text-gray-500">
+                                Quality: {{ item.quality.name || 'N/A' }}
+                            </span>
+                        </div>
+                    </div>
+                </li>
+                }
+            </ul>
+            } @else {
+            <p>No equipment data available.</p>
+            }
+        </div>
+    </div>
+    } @else {
+    <p>No character data available. Please fetch a character.</p>
+    }
 </div>
-}
