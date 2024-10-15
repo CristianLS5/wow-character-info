@@ -1,0 +1,33 @@
+<header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down">
+  <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
+    <h1 class="text-2xl font-bold mb-4 md:mb-0 animate-pulse">WoW Character Viewer</h1>
+    <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+      <input 
+        type="text" 
+        [(ngModel)]="realm" 
+        (ngModelChange)="onRealmChange($event)"
+        placeholder="Realm" 
+        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right"
+      >
+      <input 
+        type="text" 
+        [(ngModel)]="characterName" 
+        (ngModelChange)="onCharacterNameChange($event)"
+        placeholder="Character Name" 
+        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-left"
+      >
+      <button 
+        (click)="onFetchCharacter()" 
+        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out animate-bounce"
+      >
+        Fetch Character
+      </button>
+      <button 
+        (click)="onAuthenticate()" 
+        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all duration-300 ease-in-out animate-pulse"
+      >
+        Authenticate
+      </button>
+    </div>
+  </div>
+</header>

@@ -1,74 +1,60 @@
-<div class="p-4">
-    <button (click)="authenticate()"
-        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
-        Authenticate with Battle.net
-    </button>
+<div class="relative h-screen overflow-hidden bg-custom-bg text-custom-text">
 
-    <form (ngSubmit)="fetchCharacter()" class="mb-4">
-        <div class="mb-2">
-            <label for="realm" class="block text-sm font-medium text-gray-700">Realm:</label>
-            <input type="text" id="realm" [(ngModel)]="realm" name="realm" required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-        </div>
-        <div class="mb-2">
-            <label for="characterName" class="block text-sm font-medium text-gray-700">Character Name:</label>
-            <input type="text" id="characterName" [(ngModel)]="characterName" name="characterName" required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-        </div>
-        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Fetch Character
-        </button>
-    </form>
+    <app-header [realm]="realm" [characterName]="characterName" (realmChange)="realm = $event"
+        (characterNameChange)="characterName = $event" (authenticate)="authenticate()"
+        (fetchCharacter)="fetchCharacter()">
+    </app-header>
 
     @if (characterService.loading()) {
     <div class="flex justify-center items-center h-32">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-custom-text"></div>
     </div>
     } @else if (characterService.error()) {
     <p class="text-red-500">Error: {{ characterService.error() }}</p>
-    } @else if (characterEquipment) {
-    <div class="p-4">
-        <div class="mt-4">
-            <h3 class="text-xl font-bold mb-2">Character Equipment</h3>
+    } @else {
+    @if (characterEquipment && characterMedia) {
+    <div class="relative h-full">
+        <!-- Full-screen character image with reduced opacity -->
+        @if (getMainRawImage()) {
+        <img [src]="getMainRawImage()" alt="Character Image"
+            class="absolute inset-0 w-full h-full object-cover opacity-70">
+        }
+
+        <!-- Equipment overlay -->
+        <div class="absolute inset-0 p-4 overflow-auto">
+            <h3 class="text-2xl font-bold mb-4 text-custom-text">Character Equipment</h3>
             @if (hasEquippedItems) {
             <div class="mb-4">
-                <h4 class="text-lg font-semibold">Average Item Level: {{ getAverageItemLevel() }}</h4>
+                <h4 class="text-xl font-semibold text-custom-text">Average Item Level: {{ getAverageItemLevel() }}</h4>
             </div>
-            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                @for (item of characterEquipment.equipped_items; track $index) {
-                <li class="bg-gray-100 p-4 rounded-lg shadow">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 mr-4 flex items-center justify-center bg-gray-200">
-                            @if (item.iconUrl) {
-                            <img [src]="item.iconUrl" [alt]="item.name" class="w-full h-full object-cover"
-                                (error)="onImageError($event, item)">
-                            } @else {
-                            <span class="text-xs text-gray-500">No icon</span>
-                            }
-                        </div>
-                        <div>
-                            <strong>{{ item.slot.name || 'Unknown Slot' }}</strong>
-                            <br>
-                            <span class="text-sm font-medium">{{ item.name || 'Unknown Item' }}</span>
-                            <br>
-                            <span class="text-sm text-gray-600">
-                                Item Level: {{ item.level.value || 'N/A' }}
-                            </span>
-                            <br>
-                            <span class="text-xs text-gray-500">
-                                Quality: {{ item.quality.name || 'N/A' }}
-                            </span>
-                        </div>
+            <div class="flex flex-wrap justify-between">
+                <!-- Left column -->
+                <div class="w-full md:w-5/12">
+                    @for (item of getLeftColumnItems(); track $index) {
+                    <div class="animate-fade-in-right animate-delay-{{ $index * 100 }} mb-4">
+                        <app-equipment-card [item]="item" [isRightColumn]="false"></app-equipment-card>
                     </div>
-                </li>
-                }
-            </ul>
+                    }
+                </div>
+
+                <!-- Right column -->
+                <div class="w-full md:w-5/12">
+                    @for (item of getRightColumnItems(); track $index) {
+                    <div class="animate-fade-in-left animate-delay-{{ ($index + 8) * 100 }} mb-4">
+                        <app-equipment-card [item]="item" [isRightColumn]="true"></app-equipment-card>
+                    </div>
+                    }
+                </div>
+            </div>
             } @else {
-            <p>No equipment data available.</p>
+            <p class="text-custom-text">No equipment data available.</p>
             }
         </div>
     </div>
-    } @else {
-    <p>No character data available. Please fetch a character.</p>
+    }
+
+    @if (!characterEquipment && !characterMedia) {
+    <p class="text-custom-text">No character data available. Please fetch a character.</p>
+    }
     }
 </div>

@@ -1,0 +1,53 @@
+<a [href]="getWowheadUrl()" target="_blank" rel="noopener noreferrer" class="block">
+  <div class="p-2 rounded-lg shadow transition-all duration-300 ease-in-out flex items-center bg-transparent hover:bg-custom-card-bg hover:bg-opacity-80 cursor-pointer" [ngClass]="{'justify-end': isRightColumn}">
+    @if (!isRightColumn) {
+        <div class="w-16 h-16 mr-4 flex-shrink-0">
+            @if (item.iconUrl) {
+                <img [src]="item.iconUrl" [alt]="item.name" class="w-full h-full object-cover rounded"
+                    (error)="onImageError($event)">
+            } @else {
+                <span class="text-xs text-custom-text">No icon</span>
+            }
+        </div>
+        <div class="hidden group-hover:block">
+            <strong class="text-lg text-custom-text">{{ item.slot.name }}</strong>
+            <br>
+            <span class="text-base font-medium text-custom-text">{{ item.name }}</span>
+            <br>
+            <span class="text-sm text-custom-text">
+                {{ item.level.display_string }}
+            </span>
+            @if (item.transmog) {
+            <br>
+            <span class="text-xs text-custom-text">
+                {{ item.transmog.display_string }}
+            </span>
+            }
+        </div>
+    } @else {
+        <div class="hidden group-hover:block text-right mr-4">
+            <strong class="text-lg text-custom-text">{{ item.slot.name }}</strong>
+            <br>
+            <span class="text-base font-medium text-custom-text">{{ item.name }}</span>
+            <br>
+            <span class="text-sm text-custom-text">
+                {{ item.level.display_string }}
+            </span>
+            @if (item.transmog) {
+            <br>
+            <span class="text-xs text-custom-text">
+                {{ item.transmog.display_string }}
+            </span>
+            }
+        </div>
+        <div class="w-16 h-16 flex-shrink-0">
+            @if (item.iconUrl) {
+                <img [src]="item.iconUrl" [alt]="item.name" class="w-full h-full object-cover rounded"
+                    (error)="onImageError($event)">
+            } @else {
+                <span class="text-xs text-custom-text">No icon</span>
+            }
+        </div>
+    }
+  </div>
+</a>

@@ -14,6 +14,13 @@ interface CharacterEquipment {
   }>;
 }
 
+interface CharacterMedia {
+  assets: Array<{
+    key: string;
+    value: string;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,6 +29,7 @@ export class CharacterService {
 
   private loadingSignal = signal<boolean>(false);
   private characterEquipmentSignal = signal<CharacterEquipment | null>(null);
+  private characterMediaSignal = signal<CharacterMedia | null>(null);
   private errorSignal = signal<string | null>(null);
 
   loading = computed(() => this.loadingSignal());
@@ -56,5 +64,34 @@ export class CharacterService {
 
   get characterEquipment() {
     return this.characterEquipmentSignal.asReadonly();
+  }
+
+  getCharacterMedia(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterMedia> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/media`;
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    return this.http.get<CharacterMedia>(url).pipe(
+      tap((data) => {
+        console.log('Received character media data:', data);
+        this.characterMediaSignal.set(data);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        const errorMessage = `Error fetching character media: ${error.message}`;
+        console.error(errorMessage, error);
+        this.errorSignal.set(errorMessage);
+        return throwError(() => new Error(errorMessage));
+      }),
+      finalize(() => {
+        this.loadingSignal.set(false);
+      })
+    );
+  }
+
+  get characterMedia() {
+    return this.characterMediaSignal.asReadonly();
   }
 }
