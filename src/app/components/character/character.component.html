@@ -1,46 +1,62 @@
 <div class="relative h-screen overflow-hidden bg-custom-bg text-custom-text">
-
     <app-header [realm]="realm" [characterName]="characterName" (realmChange)="realm = $event"
         (characterNameChange)="characterName = $event" (authenticate)="authenticate()"
         (fetchCharacter)="fetchCharacter()">
     </app-header>
 
     @if (characterService.loading()) {
-    <div class="flex justify-center items-center h-32">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-custom-text"></div>
+    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div role="status">
+            <img src="assets/icons/loading-spinner.svg" alt="Loading..." class="w-16 h-16">
+            <span class="sr-only">Loading...</span>
+        </div>
     </div>
     } @else if (characterService.error()) {
-    <p class="text-red-500">Error: {{ characterService.error() }}</p>
-    } @else {
-    @if (characterEquipment && characterMedia) {
+    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-red-500 text-white p-4 rounded-lg">
+            {{ characterService.error() }}
+        </div>
+    </div>
+    } @else if (characterService.isDataAvailable()) {
     <div class="relative h-full">
-        <!-- Full-screen character image with reduced opacity -->
         @if (getMainRawImage()) {
         <img [src]="getMainRawImage()" alt="Character Image"
-            class="absolute inset-0 w-full h-full object-cover opacity-70">
+            class="absolute inset-0 w-full h-full object-cover opacity-70 animate-fade-in-1">
         }
 
-        <!-- Equipment overlay -->
-        <div class="absolute inset-0 p-4 overflow-auto">
-            <h3 class="text-2xl font-bold mb-4 text-custom-text">Character Equipment</h3>
-            @if (hasEquippedItems) {
-            <div class="mb-4">
-                <h4 class="text-xl font-semibold text-custom-text">Average Item Level: {{ getAverageItemLevel() }}</h4>
+        <div class="absolute inset-0 p-4 overflow-y-auto">
+            @if (characterProfile) {
+            <div class="mb-4 bg-custom-bg bg-opacity-80 p-4 rounded-lg">
+                <div class="flex flex-wrap items-center justify-between">
+                    <h2 class="text-3xl font-bold text-custom-text mb-2 md:mb-0 w-full md:w-auto animate-fade-in-1">
+                        {{ characterProfile.name }}
+                    </h2>
+                    <p class="text-lg text-custom-text mb-2 md:mb-0 w-full md:w-auto animate-fade-in-2">
+                        Level {{ characterProfile.level }} {{ characterProfile.race.name }} {{ characterProfile.character_class.name }}
+                    </p>
+                    @if (characterProfile.guild) {
+                    <p class="text-lg text-custom-text mb-2 md:mb-0 w-full md:w-auto animate-fade-in-3">
+                        {{ characterProfile.guild.name }} - {{ characterProfile.realm.name }}
+                    </p>
+                    }
+                    <p class="text-lg text-custom-text w-full md:w-auto animate-fade-in-4">
+                        Item Level: {{ characterProfile.average_item_level }} ({{ characterProfile.equipped_item_level }} equipped)
+                    </p>
+                </div>
             </div>
+            }
+            @if (hasEquippedItems) {
             <div class="flex flex-wrap justify-between">
-                <!-- Left column -->
-                <div class="w-full md:w-5/12">
+                <div class="w-full md:w-5/12 space-y-4">
                     @for (item of getLeftColumnItems(); track $index) {
-                    <div class="animate-fade-in-right animate-delay-{{ $index * 100 }} mb-4">
+                    <div class="animate-fade-in-right animate-delay-{{ $index * 100 }}">
                         <app-equipment-card [item]="item" [isRightColumn]="false"></app-equipment-card>
                     </div>
                     }
                 </div>
-
-                <!-- Right column -->
-                <div class="w-full md:w-5/12">
+                <div class="w-full md:w-5/12 space-y-4">
                     @for (item of getRightColumnItems(); track $index) {
-                    <div class="animate-fade-in-left animate-delay-{{ ($index + 8) * 100 }} mb-4">
+                    <div class="animate-fade-in-left animate-delay-{{ ($index + 8) * 100 }}">
                         <app-equipment-card [item]="item" [isRightColumn]="true"></app-equipment-card>
                     </div>
                     }
@@ -51,10 +67,7 @@
             }
         </div>
     </div>
-    }
-
-    @if (!characterEquipment && !characterMedia) {
+    } @else {
     <p class="text-custom-text">No character data available. Please fetch a character.</p>
-    }
     }
 </div>

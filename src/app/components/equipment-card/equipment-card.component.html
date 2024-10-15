@@ -1,5 +1,5 @@
 <a [href]="getWowheadUrl()" target="_blank" rel="noopener noreferrer" class="block">
-  <div class="p-2 rounded-lg shadow transition-all duration-300 ease-in-out flex items-center bg-transparent hover:bg-custom-card-bg hover:bg-opacity-80 cursor-pointer" [ngClass]="{'justify-end': isRightColumn}">
+  <div class="p-2 rounded-lg shadow transition-all duration-300 ease-in-out flex items-center bg-transparent hover:bg-custom-card-bg hover:bg-opacity-80 cursor-pointer relative" [ngClass]="{'justify-end': isRightColumn}">
     @if (!isRightColumn) {
         <div class="w-16 h-16 mr-4 flex-shrink-0">
             @if (item.iconUrl) {
@@ -9,7 +9,7 @@
                 <span class="text-xs text-custom-text">No icon</span>
             }
         </div>
-        <div class="hidden group-hover:block">
+        <div class="hidden group-hover:block absolute left-20 top-1/2 transform -translate-y-1/2 bg-custom-card-bg bg-opacity-90 p-2 rounded z-10">
             <strong class="text-lg text-custom-text">{{ item.slot.name }}</strong>
             <br>
             <span class="text-base font-medium text-custom-text">{{ item.name }}</span>
@@ -25,7 +25,7 @@
             }
         </div>
     } @else {
-        <div class="hidden group-hover:block text-right mr-4">
+        <div class="hidden group-hover:block absolute right-20 top-1/2 transform -translate-y-1/2 bg-custom-card-bg bg-opacity-90 p-2 rounded z-10 text-right">
             <strong class="text-lg text-custom-text">{{ item.slot.name }}</strong>
             <br>
             <span class="text-base font-medium text-custom-text">{{ item.name }}</span>

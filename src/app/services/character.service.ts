@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, finalize, tap } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
+import { forkJoin, Observable, throwError } from 'rxjs';
 
 interface CharacterEquipment {
   equipped_items: Array<{
@@ -30,6 +30,7 @@ export class CharacterService {
   private loadingSignal = signal<boolean>(false);
   private characterEquipmentSignal = signal<CharacterEquipment | null>(null);
   private characterMediaSignal = signal<CharacterMedia | null>(null);
+  private characterProfileSignal = signal<any | null>(null);
   private errorSignal = signal<string | null>(null);
 
   loading = computed(() => this.loadingSignal());
@@ -37,33 +38,36 @@ export class CharacterService {
 
   constructor(private http: HttpClient) {}
 
-  getCharacterEquipment(
+  fetchAllCharacterData(
     realm: string,
     characterName: string
-  ): Observable<CharacterEquipment> {
-    const url = `${this.apiUrl}/character/${realm}/${characterName}/equipment`;
+  ): Observable<[CharacterEquipment, CharacterMedia, any]> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
-    return this.http.get<CharacterEquipment>(url).pipe(
-      tap((data) => {
-        console.log('Received character equipment data:', data);
-        this.characterEquipmentSignal.set(data);
-      }),
-      catchError((error: HttpErrorResponse) => {
-        const errorMessage = `Error fetching character equipment: ${error.message}`;
-        console.error(errorMessage, error);
-        this.errorSignal.set(errorMessage);
-        return throwError(() => new Error(errorMessage));
-      }),
+    return forkJoin([
+      this.getCharacterEquipment(realm, characterName),
+      this.getCharacterMedia(realm, characterName),
+      this.getCharacterProfile(realm, characterName),
+    ]).pipe(
       finalize(() => {
         this.loadingSignal.set(false);
       })
     );
   }
 
-  get characterEquipment() {
-    return this.characterEquipmentSignal.asReadonly();
+  getCharacterEquipment(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterEquipment> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/equipment`;
+    return this.http.get<CharacterEquipment>(url).pipe(
+      tap((data) => {
+        console.log('Received character equipment data:', data);
+        this.characterEquipmentSignal.set(data);
+      }),
+      catchError(this.handleError('character equipment'))
+    );
   }
 
   getCharacterMedia(
@@ -71,27 +75,53 @@ export class CharacterService {
     characterName: string
   ): Observable<CharacterMedia> {
     const url = `${this.apiUrl}/character/${realm}/${characterName}/media`;
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
     return this.http.get<CharacterMedia>(url).pipe(
       tap((data) => {
         console.log('Received character media data:', data);
         this.characterMediaSignal.set(data);
       }),
-      catchError((error: HttpErrorResponse) => {
-        const errorMessage = `Error fetching character media: ${error.message}`;
-        console.error(errorMessage, error);
-        this.errorSignal.set(errorMessage);
-        return throwError(() => new Error(errorMessage));
-      }),
-      finalize(() => {
-        this.loadingSignal.set(false);
-      })
+      catchError(this.handleError('character media'))
     );
+  }
+
+  getCharacterProfile(realm: string, characterName: string): Observable<any> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/profile`;
+    return this.http.get<any>(url).pipe(
+      tap((data) => {
+        console.log('Character profile data:', data);
+        this.characterProfileSignal.set(data);
+      }),
+      catchError(this.handleError('character profile'))
+    );
+  }
+
+  private handleError(operation: string) {
+    return (error: HttpErrorResponse): Observable<never> => {
+      const errorMessage = `Error fetching ${operation}: ${error.message}`;
+      console.error(errorMessage, error);
+      this.errorSignal.set(errorMessage);
+      return throwError(() => new Error(errorMessage));
+    };
+  }
+
+  get characterEquipment() {
+    return this.characterEquipmentSignal.asReadonly();
   }
 
   get characterMedia() {
     return this.characterMediaSignal.asReadonly();
+  }
+
+  get characterProfile() {
+    return this.characterProfileSignal.asReadonly();
+  }
+
+  get isDataAvailable() {
+    return computed(
+      () =>
+        !!this.characterEquipmentSignal() &&
+        !!this.characterMediaSignal() &&
+        !!this.characterProfileSignal()
+    );
   }
 }

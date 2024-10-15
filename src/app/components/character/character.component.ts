@@ -35,25 +35,14 @@ export class CharacterComponent {
   fetchCharacter() {
     if (this.realm && this.characterName) {
       this.characterService
-        .getCharacterEquipment(this.realm, this.characterName)
+        .fetchAllCharacterData(this.realm, this.characterName)
         .subscribe({
-          next: (data) => {
-            console.log('Character equipment fetched successfully', data);
-            this.logIconUrls(data);
+          next: ([equipment, media, profile]) => {
+            console.log('All character data fetched successfully');
+            // We don't need to set characterProfile here anymore
           },
           error: (error) => {
-            console.error('Error fetching character equipment', error);
-          },
-        });
-
-      this.characterService
-        .getCharacterMedia(this.realm, this.characterName)
-        .subscribe({
-          next: (data) => {
-            console.log('Character media fetched successfully', data);
-          },
-          error: (error) => {
-            console.error('Error fetching character media', error);
+            console.error('Error fetching character data', error);
           },
         });
     }
@@ -66,23 +55,17 @@ export class CharacterComponent {
   get characterMedia() {
     return this.characterService.characterMedia();
   }
+
+  get characterProfile() {
+    return this.characterService.characterProfile();
+  }
+
   get hasEquippedItems(): boolean {
     return (
       !!this.characterEquipment &&
       Array.isArray(this.characterEquipment.equipped_items) &&
       this.characterEquipment.equipped_items.length > 0
     );
-  }
-
-  getAverageItemLevel(): number {
-    const equippedItems = this.characterEquipment?.equipped_items;
-    if (!equippedItems || equippedItems.length === 0) return 0;
-
-    const totalItemLevel = equippedItems.reduce(
-      (sum, item) => sum + (item.level?.value || 0),
-      0
-    );
-    return Math.round(totalItemLevel / equippedItems.length);
   }
 
   getMainRawImage(): string | undefined {
