@@ -33,4 +33,8 @@ export class EquipmentCardComponent {
   getTransmogIconRotation(): string {
     return this.isRightColumn ? 'rotate-180' : 'rotate-90';
   }
+
+  getTransmogIconAnimation(): string {
+    return this.isRightColumn ? 'group-hover:animate-sway-right' : 'group-hover:animate-sway-left';
+  }
 }

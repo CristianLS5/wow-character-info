@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EquipmentCardComponent } from '../equipment-card/equipment-card.component';
 import { HeaderComponent } from '../header/header.component';
+import { getClassColor, getFactionColor } from '../../utils/class-colors';
 
 interface CharacterEquipment {
   equipped_items: Array<{
@@ -114,6 +115,14 @@ export class CharacterComponent {
         rightSlots.includes(item.slot.type.toUpperCase())
       ) || []
     );
+  }
+
+  getClassColor(className: string): string {
+    return getClassColor(className);
+  }
+
+  getFactionColor(factionName: string): string {
+    return getFactionColor(factionName);
   }
 
   logIconUrls(data: CharacterEquipment) {
