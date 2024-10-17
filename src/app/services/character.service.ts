@@ -21,6 +21,44 @@ interface CharacterMedia {
   }>;
 }
 
+interface CharacterProfile {
+  name: string;
+  gender: string;
+  faction: string;
+  race: string;
+  character_class: {
+    key: { href: string };
+    name: string;
+    id: number;
+  };
+  active_spec: {
+    key: { href: string };
+    name: string;
+    id: number;
+  };
+  realm: {
+    key: { href: string };
+    name: string;
+    id: number;
+    slug: string;
+  };
+  guild?: {
+    name: string;
+    realm: {
+      key: { href: string };
+      name: string;
+      id: number;
+      slug: string;
+    };
+  };
+  level: number;
+  experience: number;
+  achievement_points: number;
+  last_login_timestamp: number;
+  average_item_level: number;
+  equipped_item_level: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -30,7 +68,7 @@ export class CharacterService {
   private loadingSignal = signal<boolean>(false);
   private characterEquipmentSignal = signal<CharacterEquipment | null>(null);
   private characterMediaSignal = signal<CharacterMedia | null>(null);
-  private characterProfileSignal = signal<any | null>(null);
+  private characterProfileSignal = signal<CharacterProfile | null>(null);
   private errorSignal = signal<string | null>(null);
 
   loading = computed(() => this.loadingSignal());
@@ -41,7 +79,7 @@ export class CharacterService {
   fetchAllCharacterData(
     realm: string,
     characterName: string
-  ): Observable<[CharacterEquipment, CharacterMedia, any]> {
+  ): Observable<[CharacterEquipment, CharacterMedia, CharacterProfile]> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
@@ -84,9 +122,9 @@ export class CharacterService {
     );
   }
 
-  getCharacterProfile(realm: string, characterName: string): Observable<any> {
+  getCharacterProfile(realm: string, characterName: string): Observable<CharacterProfile> {
     const url = `${this.apiUrl}/character/${realm}/${characterName}/profile`;
-    return this.http.get<any>(url).pipe(
+    return this.http.get<CharacterProfile>(url).pipe(
       tap((data) => {
         console.log('Character profile data:', data);
         this.characterProfileSignal.set(data);

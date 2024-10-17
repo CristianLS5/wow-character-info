@@ -118,11 +118,11 @@ export class CharacterComponent {
   }
 
   getClassColor(className: string): string {
-    return getClassColor(className);
+    return getClassColor(className || '');
   }
 
   getFactionColor(factionName: string): string {
-    return getFactionColor(factionName);
+    return getFactionColor(factionName || '');
   }
 
   logIconUrls(data: CharacterEquipment) {
