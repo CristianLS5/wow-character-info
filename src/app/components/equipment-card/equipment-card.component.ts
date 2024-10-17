@@ -6,8 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './equipment-card.component.html',
-  styleUrl: './equipment-card.component.sass',
-  host: {'class': 'group'}
+  styleUrl: './equipment-card.component.sass'
 })
 export class EquipmentCardComponent {
   @Input() item: any;
@@ -21,5 +20,17 @@ export class EquipmentCardComponent {
 
   getWowheadUrl(): string {
     return `https://www.wowhead.com/item=${this.item.item.id}`;
+  }
+
+  getTransmogWowheadUrl(): string {
+    return this.item.transmog ? `https://www.wowhead.com/item=${this.item.transmog.item.id}` : '';
+  }
+
+  hasTransmog(): boolean {
+    return !!this.item.transmog;
+  }
+
+  getTransmogIconRotation(): string {
+    return this.isRightColumn ? 'rotate-180' : 'rotate-90';
   }
 }

@@ -1,4 +1,5 @@
 const animations = require("@midudev/tailwind-animations");
+const { addDynamicIconSelectors } = require('@iconify/tailwind');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -11,18 +12,18 @@ module.exports = {
         "custom-card-bg": "#4a4332",
       },
       animation: {
-        'fade-in-1': 'fadeIn 2s',
-        'fade-in-2': 'fadeIn 4s',
-        'fade-in-3': 'fadeIn 6s',
-        'fade-in-4': 'fadeIn 8s',
+        "fade-in-1": "fadeIn 2s",
+        "fade-in-2": "fadeIn 4s",
+        "fade-in-3": "fadeIn 6s",
+        "fade-in-4": "fadeIn 8s",
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
       },
     },
   },
-  plugins: [animations],
+  plugins: [animations, addDynamicIconSelectors()],
 };
