@@ -1,4 +1,15 @@
 import { Routes } from '@angular/router';
+import { LandingComponent } from './components/landing/landing.component';
 import { CharacterComponent } from './components/character/character.component';
+import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
+import { AuthGuard } from './utils/auth/auth.guard';
 
-export const routes: Routes = [{ path: '', component: CharacterComponent }];
+export const routes: Routes = [
+  { path: '', component: LandingComponent },
+  { path: 'auth/callback', component: AuthCallbackComponent },
+  {
+    path: 'character',
+    component: CharacterComponent,
+    canActivate: [AuthGuard],
+  },
+];

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { EquipmentCardComponent } from '../equipment-card/equipment-card.component';
 import { HeaderComponent } from '../header/header.component';
 import { getClassColor, getFactionColor } from '../../utils/class-colors';
+import { AuthService } from '../../utils/auth/auth.service';
 
 interface CharacterEquipment {
   equipped_items: Array<{
@@ -25,12 +26,18 @@ interface CharacterEquipment {
   styleUrl: './character.component.sass',
 })
 export class CharacterComponent {
+  constructor(private authService: AuthService) {}
+
   characterService = inject(CharacterService);
   realm: string = '';
   characterName: string = '';
 
+  ngOnInit() {
+    console.log('CharacterComponent initialized');
+  }
+
   authenticate() {
-    window.location.href = 'http://localhost:3000/auth/bnet';
+    this.authService.login();
   }
 
   fetchCharacter() {
