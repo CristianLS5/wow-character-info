@@ -102,6 +102,12 @@ export class CharacterService {
     return this.http.get<CharacterEquipment>(url).pipe(
       tap((data) => {
         console.log('Received character equipment data:', data);
+        if (data && data.equipped_items) {
+          data.equipped_items.forEach((item, index) => {
+            console.log(`Item ${index + 1}: ${item.name}`);
+            console.log(`Icon URL: ${item.iconUrl || 'Not available'}`);
+          });
+        }
         this.characterEquipmentSignal.set(data);
       }),
       catchError(this.handleError('character equipment'))
@@ -122,7 +128,10 @@ export class CharacterService {
     );
   }
 
-  getCharacterProfile(realm: string, characterName: string): Observable<CharacterProfile> {
+  getCharacterProfile(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterProfile> {
     const url = `${this.apiUrl}/character/${realm}/${characterName}/profile`;
     return this.http.get<CharacterProfile>(url).pipe(
       tap((data) => {

@@ -18,8 +18,7 @@ export class AuthCallbackComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
-      const code = params['code'];
-      const state = params['state'];
+      const success = params['success'];
       const error = params['error'];
 
       if (error) {
@@ -28,21 +27,21 @@ export class AuthCallbackComponent implements OnInit {
         return;
       }
 
-      if (code && state) {
-        this.authService.handleCallback(code, state).subscribe({
-          next: (response) => {
-            if (response.success) {
+      if (success === 'true') {
+        this.authService.handleCallback().subscribe({
+          next: (isAuthenticated) => {
+            if (isAuthenticated) {
               console.log('Authentication successful');
               this.router.navigate(['/character']);
             } else {
-              console.error('Authentication failed:', response.message);
+              console.error('Authentication failed');
               this.router.navigate(['/']);
             }
           },
           error: (error) => {
             console.error('Authentication error:', error);
             this.router.navigate(['/']);
-          }
+          },
         });
       } else {
         console.error('Invalid callback parameters');
