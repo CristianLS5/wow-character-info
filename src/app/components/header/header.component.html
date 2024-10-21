@@ -4,30 +4,41 @@
       <h1 class="text-2xl font-bold animate-pulse">{{ getTitle() }}</h1>
       @if (characterProfile()) {
         <div class="relative">
-          <button (click)="toggleDropdown($event)" class="focus:outline-none">
-            <img [src]="getAvatarUrl()" alt="Character Avatar" class="w-12 h-12 rounded-full">
+          <button (click)="toggleDropdown($event)" class="focus:outline-none group">
+            <img [src]="getAvatarUrl()" alt="Character Avatar" 
+                 class="w-12 h-12 rounded-full transition-all duration-300 ease-in-out 
+                        transform group-hover:scale-110 group-hover:shadow-glow">
           </button>
           @if (isDropdownOpen()) {
-            <div class="absolute left-0 top-12 mt-2 w-52 bg-custom-card-bg rounded-md shadow-lg z-50">
-              <p>Dropdown is open!</p>
-              <ul class="py-2">
-                <li class="px-4 py-2">
-                  <a [style.color]="getClassColor(characterProfile()!.character_class.name)">
-                    {{ characterProfile()?.name }} - {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
-                  </a>
+            <div [@dropdownAnimation] class="absolute left-0 top-12 mt-2 w-64 bg-custom-card-bg rounded-md shadow-lg z-50">
+              <ul class="py-2 px-4 space-y-2">
+                <li class="dropdown-item">
+                  <span [style.color]="getClassColor(characterProfile()!.character_class.name)" class="block text-lg font-bold">
+                    {{ characterProfile()?.name }}
+                  </span>
                 </li>
-                <li class="px-4 py-2">
-                  <a>iLvl: {{ characterProfile()?.average_item_level }}</a>
+                <li class="dropdown-item">
+                  <span class="block text-sm">
+                    {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
+                  </span>
+                </li>
+                <li class="dropdown-item">
+                  <span class="block text-sm">iLvl: {{ characterProfile()?.average_item_level }}</span>
                 </li>
                 @if (characterProfile()?.guild) {
-                  <li class="px-4 py-2">
-                    <a [style.color]="getFactionColor(characterProfile()!.faction)">
+                  <li class="dropdown-item">
+                    <span class="block text-sm">
                       &lt;{{ characterProfile()?.guild?.name }}&gt; - {{ characterProfile()?.realm?.name }}
-                    </a>
+                    </span>
                   </li>
                 }
-                <li class="px-4 py-2">
-                  <a (click)="onLogout()" class="text-red-500 cursor-pointer">Logout</a>
+                <li class="dropdown-item pt-2">
+                  <button (click)="onLogout()" 
+                          class="w-full text-center px-4 py-2 bg-red-500 text-white rounded-md 
+                                 hover:bg-red-600 transition-all duration-300 ease-in-out 
+                                 transform hover:scale-105">
+                    Logout
+                  </button>
                 </li>
               </ul>
             </div>

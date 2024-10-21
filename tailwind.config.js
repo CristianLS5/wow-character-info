@@ -33,6 +33,9 @@ module.exports = {
           '50%': { transform: 'rotate(185deg) scale(1.2)' },
         }
       },
+      boxShadow: {
+        'glow': '0 0 15px rgba(255, 255, 255, 0.5)',
+      }
     },
   },
   plugins: [

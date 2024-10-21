@@ -5,7 +5,8 @@ import { signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CharacterService } from '../../services/character.service';
 import { AuthService } from '../../utils/auth/auth.service';
-import { getClassColor, getFactionColor } from '../../utils/class-colors';
+import { getClassColor } from '../../utils/class-colors';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 
 @Component({
   selector: 'app-header',
@@ -13,6 +14,25 @@ import { getClassColor, getFactionColor } from '../../utils/class-colors';
   imports: [CommonModule, FormsModule],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.sass'],
+  animations: [
+    trigger('dropdownAnimation', [
+      transition(':enter', [
+        query('.dropdown-item', [
+          style({ opacity: 0, transform: 'translateY(-20px)' }),
+          stagger(100, [
+            animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ])
+      ]),
+      transition(':leave', [
+        query('.dropdown-item', [
+          stagger(100, [
+            animate('300ms ease-in', style({ opacity: 0, transform: 'translateY(-20px)' }))
+          ])
+        ])
+      ])
+    ])
+  ]
 })
 export class HeaderComponent {
   private characterService = inject(CharacterService);
@@ -74,22 +94,6 @@ export class HeaderComponent {
     return getClassColor(className);
   }
 
-  getFactionColor(faction: string): string {
-    return getFactionColor(faction);
-  }
-
-  getCharacterMainInfo(): string | null {
-    const profile = this.characterProfile();
-    if (!profile) return null;
-    return `${profile.name} - ${profile.active_spec?.name} ${profile.character_class?.name} (iLvl: ${profile.average_item_level})`;
-  }
-
-  getGuildInfo(): string | null {
-    const profile = this.characterProfile();
-    if (!profile || !profile.guild) return null;
-    return `<${profile.guild.name}> - ${profile.realm?.name}`;
-  }
-
   getAvatarUrl(): string | null {
     const media = this.characterMedia();
     if (media && media.assets) {
@@ -103,10 +107,7 @@ export class HeaderComponent {
 
   toggleDropdown(event: Event) {
     event.stopPropagation();
-    this.isDropdownOpen.update(value => {
-      console.log('Toggling dropdown, new value:', !value);
-      return !value;
-    });
+    this.isDropdownOpen.update(value => !value);
   }
 
   @HostListener('document:click', ['$event'])
