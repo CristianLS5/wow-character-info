@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Signal } from '@angular/core';
 
 @Component({
   selector: 'app-header',
@@ -10,8 +11,8 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./header.component.sass'],
 })
 export class HeaderComponent {
-  @Input() realm: string = '';
-  @Input() characterName: string = '';
+  @Input() realm!: Signal<string>;
+  @Input() characterName!: Signal<string>;
   @Output() realmChange = new EventEmitter<string>();
   @Output() characterNameChange = new EventEmitter<string>();
   @Output() authenticate = new EventEmitter<void>();

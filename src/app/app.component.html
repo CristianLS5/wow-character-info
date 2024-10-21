@@ -1,1 +1,6 @@
+<app-header [realm]="realm" [characterName]="characterName" (realmChange)="onRealmChange($event)"
+    (characterNameChange)="onCharacterNameChange($event)" (authenticate)="onAuthenticate()"
+    (fetchCharacter)="onFetchCharacter()">
+</app-header>
+
 <router-outlet></router-outlet>

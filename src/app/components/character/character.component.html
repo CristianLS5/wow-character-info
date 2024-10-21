@@ -1,8 +1,4 @@
 <div class="relative h-screen overflow-hidden bg-custom-bg text-custom-text">
-    <app-header [realm]="realm" [characterName]="characterName" (realmChange)="realm = $event"
-        (characterNameChange)="characterName = $event" (authenticate)="authenticate()"
-        (fetchCharacter)="fetchCharacter()">
-    </app-header>
 
     @if (characterService.loading()) {
     <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

@@ -3,9 +3,7 @@ import { CharacterService } from '../../services/character.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EquipmentCardComponent } from '../equipment-card/equipment-card.component';
-import { HeaderComponent } from '../header/header.component';
 import { getClassColor, getFactionColor } from '../../utils/class-colors';
-import { AuthService } from '../../utils/auth/auth.service';
 
 interface CharacterEquipment {
   equipped_items: Array<{
@@ -21,39 +19,17 @@ interface CharacterEquipment {
 @Component({
   selector: 'app-character',
   standalone: true,
-  imports: [CommonModule, FormsModule, EquipmentCardComponent, HeaderComponent],
+  imports: [CommonModule, FormsModule, EquipmentCardComponent],
   templateUrl: './character.component.html',
   styleUrl: './character.component.sass',
 })
 export class CharacterComponent {
-  constructor(private authService: AuthService) {}
+  constructor() {}
 
   characterService = inject(CharacterService);
-  realm: string = '';
-  characterName: string = '';
 
   ngOnInit() {
     console.log('CharacterComponent initialized');
-  }
-
-  authenticate() {
-    this.authService.login();
-  }
-
-  fetchCharacter() {
-    if (this.realm && this.characterName) {
-      this.characterService
-        .fetchAllCharacterData(this.realm, this.characterName)
-        .subscribe({
-          next: ([equipment, media, profile]) => {
-            console.log('All character data fetched successfully');
-            // We don't need to set characterProfile here anymore
-          },
-          error: (error) => {
-            console.error('Error fetching character data', error);
-          },
-        });
-    }
   }
 
   get characterEquipment(): CharacterEquipment | null {
