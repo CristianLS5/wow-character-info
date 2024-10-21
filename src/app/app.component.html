@@ -2,7 +2,10 @@
   @if (showHeader()) {
     <app-header></app-header>
   }
-  <div class="flex-grow overflow-hidden">
+  @if (showSubheader()) {
+    <app-subheader></app-subheader>
+  }
+  <main class="flex-grow overflow-hidden">
     <router-outlet></router-outlet>
-  </div>
+  </main>
 </div>

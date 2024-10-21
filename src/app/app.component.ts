@@ -1,17 +1,21 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
+import { SubheaderComponent } from './components/subheader/subheader.component';
+import { CharacterService } from './services/character.service';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent],
+  imports: [RouterOutlet, HeaderComponent, SubheaderComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.sass',
 })
 export class AppComponent {
+  private characterService = inject(CharacterService);
   showHeader = signal(false);
+  showSubheader = computed(() => !!this.characterService.characterProfile());
 
   constructor(private router: Router) {
     this.router.events

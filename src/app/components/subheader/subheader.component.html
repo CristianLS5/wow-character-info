@@ -1,0 +1,14 @@
+<nav class="bg-custom-card-bg text-custom-text shadow-md">
+    <div class="container mx-auto">
+        <ul class="flex justify-center space-x-4 p-2">
+            @for (tab of tabs; track tab.route) {
+            <li>
+                <a [routerLink]="[tab.route]" routerLinkActive="text-blue-500 font-bold"
+                    class="px-3 py-2 rounded-md hover:bg-custom-bg transition-colors duration-200">
+                    {{ tab.label }}
+                </a>
+            </li>
+            }
+        </ul>
+    </div>
+</nav>
