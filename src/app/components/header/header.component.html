@@ -1,29 +1,35 @@
-<header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down">
+<header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down relative z-50">
   <div class="container mx-auto flex items-center justify-between">
     <div class="flex items-center space-x-4">
       <h1 class="text-2xl font-bold animate-pulse">{{ getTitle() }}</h1>
       @if (characterProfile()) {
         <div class="relative">
-          <img [src]="getAvatarUrl()" 
-               alt="Character Avatar" 
-               class="w-12 h-12 rounded-full cursor-pointer"
-               (mouseenter)="onAvatarHover(true)"
-               (mouseleave)="onAvatarHover(false)">
-          @if (isHovered()) {
-            <div class="absolute left-0 top-full mt-2 p-4 bg-custom-card-bg rounded-md shadow-lg z-10">
-              <p [style.color]="getClassColor(characterProfile()!.character_class.name)" class="font-semibold">
-                {{ characterProfile()?.name }} - {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
-              </p>
-              <p class="text-white">iLvl: {{ characterProfile()?.average_item_level }}</p>
-              @if (characterProfile()?.guild) {
-                <p [style.color]="getFactionColor(characterProfile()!.faction)">
-                  &lt;{{ characterProfile()?.guild?.name }}&gt; - {{ characterProfile()?.realm?.name }}
-                </p>
-              }
-              <button (click)="onLogout()"
-                class="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300 ease-in-out animate-pulse">
-                Logout
-              </button>
+          <button (click)="toggleDropdown($event)" class="focus:outline-none">
+            <img [src]="getAvatarUrl()" alt="Character Avatar" class="w-12 h-12 rounded-full">
+          </button>
+          @if (isDropdownOpen()) {
+            <div class="absolute left-0 top-12 mt-2 w-52 bg-custom-card-bg rounded-md shadow-lg z-50">
+              <p>Dropdown is open!</p>
+              <ul class="py-2">
+                <li class="px-4 py-2">
+                  <a [style.color]="getClassColor(characterProfile()!.character_class.name)">
+                    {{ characterProfile()?.name }} - {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
+                  </a>
+                </li>
+                <li class="px-4 py-2">
+                  <a>iLvl: {{ characterProfile()?.average_item_level }}</a>
+                </li>
+                @if (characterProfile()?.guild) {
+                  <li class="px-4 py-2">
+                    <a [style.color]="getFactionColor(characterProfile()!.faction)">
+                      &lt;{{ characterProfile()?.guild?.name }}&gt; - {{ characterProfile()?.realm?.name }}
+                    </a>
+                  </li>
+                }
+                <li class="px-4 py-2">
+                  <a (click)="onLogout()" class="text-red-500 cursor-pointer">Logout</a>
+                </li>
+              </ul>
             </div>
           }
         </div>

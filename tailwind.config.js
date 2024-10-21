@@ -35,5 +35,8 @@ module.exports = {
       },
     },
   },
-  plugins: [animations, addDynamicIconSelectors()],
+  plugins: [
+    animations, 
+    addDynamicIconSelectors()
+  ],
 };

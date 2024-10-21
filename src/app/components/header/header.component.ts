@@ -1,7 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Signal, signal, computed } from '@angular/core';
+import { signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CharacterService } from '../../services/character.service';
 import { AuthService } from '../../utils/auth/auth.service';
@@ -18,12 +18,11 @@ export class HeaderComponent {
   private characterService = inject(CharacterService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private elementRef = inject(ElementRef);
 
   realm = signal('');
   characterName = signal('');
   errorMessage = signal('');
-  isHovered = signal(false);
-
   characterProfile = computed(() => this.characterService.characterProfile());
   characterMedia = computed(() => this.characterService.characterMedia());
 
@@ -100,7 +99,20 @@ export class HeaderComponent {
     return null;
   }
 
-  onAvatarHover(isHovered: boolean) {
-    this.isHovered.set(isHovered);
+  isDropdownOpen = signal(false);
+
+  toggleDropdown(event: Event) {
+    event.stopPropagation();
+    this.isDropdownOpen.update(value => {
+      console.log('Toggling dropdown, new value:', !value);
+      return !value;
+    });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.isDropdownOpen.set(false);
+    }
   }
 }
