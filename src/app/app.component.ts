@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
 import { AuthService } from './utils/auth/auth.service';
 import { CharacterService } from './services/character.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -14,11 +15,19 @@ import { CharacterService } from './services/character.service';
 export class AppComponent {
   realm = signal('');
   characterName = signal('');
+  showHeader = signal(false);
 
   constructor(
     private authService: AuthService,
-    private characterService: CharacterService
-  ) {}
+    private characterService: CharacterService,
+    private router: Router
+  ) {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.showHeader.set(event.url !== '/' && event.url !== '/auth/callback');
+    });
+  }
 
   onRealmChange(value: string) {
     this.realm.set(value);
