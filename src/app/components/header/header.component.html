@@ -1,19 +1,35 @@
 <header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down">
-  <div class="container mx-auto flex flex-wrap items-center justify-between">
-    <div class="flex items-center space-x-4 mb-4 md:mb-0">
-      <h1 class="text-2xl font-bold animate-pulse">WCV</h1>
+  <div class="container mx-auto flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <h1 class="text-2xl font-bold animate-pulse">{{ getTitle() }}</h1>
       @if (characterProfile()) {
-        <div class="flex flex-col">
-          <h2 class="text-xl font-semibold" [style.color]="getClassColor(characterProfile()!.character_class.name)">
-            {{ characterProfile()?.name }}
-          </h2>
-          <p class="text-sm" [style.color]="getFactionColor(characterProfile()!.faction)">
-            {{ characterProfile()?.realm?.name }}
-          </p>
+        <div class="relative">
+          <img [src]="getAvatarUrl()" 
+               alt="Character Avatar" 
+               class="w-12 h-12 rounded-full cursor-pointer"
+               (mouseenter)="onAvatarHover(true)"
+               (mouseleave)="onAvatarHover(false)">
+          @if (isHovered()) {
+            <div class="absolute left-0 top-full mt-2 p-4 bg-custom-card-bg rounded-md shadow-lg z-10">
+              <p [style.color]="getClassColor(characterProfile()!.character_class.name)" class="font-semibold">
+                {{ characterProfile()?.name }} - {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
+              </p>
+              <p class="text-white">iLvl: {{ characterProfile()?.average_item_level }}</p>
+              @if (characterProfile()?.guild) {
+                <p [style.color]="getFactionColor(characterProfile()!.faction)">
+                  &lt;{{ characterProfile()?.guild?.name }}&gt; - {{ characterProfile()?.realm?.name }}
+                </p>
+              }
+              <button (click)="onLogout()"
+                class="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300 ease-in-out animate-pulse">
+                Logout
+              </button>
+            </div>
+          }
         </div>
       }
     </div>
-    <div class="flex flex-wrap items-center space-x-2 w-full md:w-auto">
+    <div class="flex items-center space-x-2">
       <input type="text" [ngModel]="realm()" (ngModelChange)="onRealmChange($event)" placeholder="Realm"
         class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right">
       <input type="text" [ngModel]="characterName()" (ngModelChange)="onCharacterNameChange($event)"
@@ -23,10 +39,12 @@
         class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out animate-bounce">
         Fetch
       </button>
-      <button (click)="onLogout()"
-        class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300 ease-in-out animate-pulse">
-        Logout
-      </button>
+      @if (!characterProfile()) {
+        <button (click)="onLogout()"
+          class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300 ease-in-out animate-pulse">
+          Logout
+        </button>
+      }
     </div>
   </div>
   @if (errorMessage()) {

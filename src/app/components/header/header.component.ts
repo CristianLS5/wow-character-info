@@ -22,8 +22,10 @@ export class HeaderComponent {
   realm = signal('');
   characterName = signal('');
   errorMessage = signal('');
+  isHovered = signal(false);
 
   characterProfile = computed(() => this.characterService.characterProfile());
+  characterMedia = computed(() => this.characterService.characterMedia());
 
   onRealmChange(value: string) {
     this.realm.set(value);
@@ -61,15 +63,44 @@ export class HeaderComponent {
       error: (error) => {
         console.error('Logout failed:', error);
         // Handle logout error (e.g., show an error message to the user)
-      }
+      },
     });
+  }
+
+  getTitle(): string {
+    return this.characterProfile() ? 'WCV' : 'WoW Character Viewer';
   }
 
   getClassColor(className: string): string {
     return getClassColor(className);
   }
 
-  getFactionColor(factionName: string): string {
-    return getFactionColor(factionName);
+  getFactionColor(faction: string): string {
+    return getFactionColor(faction);
+  }
+
+  getCharacterMainInfo(): string | null {
+    const profile = this.characterProfile();
+    if (!profile) return null;
+    return `${profile.name} - ${profile.active_spec?.name} ${profile.character_class?.name} (iLvl: ${profile.average_item_level})`;
+  }
+
+  getGuildInfo(): string | null {
+    const profile = this.characterProfile();
+    if (!profile || !profile.guild) return null;
+    return `<${profile.guild.name}> - ${profile.realm?.name}`;
+  }
+
+  getAvatarUrl(): string | null {
+    const media = this.characterMedia();
+    if (media && media.assets) {
+      const avatarAsset = media.assets.find(asset => asset.key === 'avatar');
+      return avatarAsset ? avatarAsset.value : null;
+    }
+    return null;
+  }
+
+  onAvatarHover(isHovered: boolean) {
+    this.isHovered.set(isHovered);
   }
 }
