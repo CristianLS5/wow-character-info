@@ -1,7 +1,11 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Signal } from '@angular/core';
+import { Signal, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
+import { CharacterService } from '../../services/character.service';
+import { AuthService } from '../../utils/auth/auth.service';
+import { getClassColor, getFactionColor } from '../../utils/class-colors';
 
 @Component({
   selector: 'app-header',
@@ -11,26 +15,61 @@ import { Signal } from '@angular/core';
   styleUrls: ['./header.component.sass'],
 })
 export class HeaderComponent {
-  @Input() realm!: Signal<string>;
-  @Input() characterName!: Signal<string>;
-  @Output() realmChange = new EventEmitter<string>();
-  @Output() characterNameChange = new EventEmitter<string>();
-  @Output() authenticate = new EventEmitter<void>();
-  @Output() fetchCharacter = new EventEmitter<void>();
+  private characterService = inject(CharacterService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  realm = signal('');
+  characterName = signal('');
+  errorMessage = signal('');
+
+  characterProfile = computed(() => this.characterService.characterProfile());
 
   onRealmChange(value: string) {
-    this.realmChange.emit(value);
+    this.realm.set(value);
   }
 
   onCharacterNameChange(value: string) {
-    this.characterNameChange.emit(value);
-  }
-
-  onAuthenticate() {
-    this.authenticate.emit();
+    this.characterName.set(value);
   }
 
   onFetchCharacter() {
-    this.fetchCharacter.emit();
+    if (this.realm() && this.characterName()) {
+      this.errorMessage.set('');
+      this.characterService
+        .fetchAllCharacterData(this.realm(), this.characterName())
+        .subscribe({
+          next: () => console.log('Character data fetched successfully'),
+          error: (error) => {
+            console.error('Error fetching character data', error);
+            this.errorMessage.set(
+              'Failed to fetch character data. Please try again.'
+            );
+          },
+        });
+    } else {
+      this.errorMessage.set('Please enter both realm and character name.');
+    }
+  }
+
+  onLogout() {
+    this.authService.logout().subscribe({
+      next: () => {
+        this.characterService.clearCharacterData(); // Make sure to implement this method in CharacterService
+        this.router.navigate(['/']);
+      },
+      error: (error) => {
+        console.error('Logout failed:', error);
+        // Handle logout error (e.g., show an error message to the user)
+      }
+    });
+  }
+
+  getClassColor(className: string): string {
+    return getClassColor(className);
+  }
+
+  getFactionColor(factionName: string): string {
+    return getFactionColor(factionName);
   }
 }

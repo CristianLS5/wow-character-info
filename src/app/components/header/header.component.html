@@ -1,33 +1,37 @@
 <header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down">
-  <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
-    <h1 class="text-2xl font-bold mb-4 md:mb-0 animate-pulse">WoW Character Viewer</h1>
-    <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
-      <input 
-        type="text" 
-        [(ngModel)]="realm" 
-        (ngModelChange)="onRealmChange($event)"
-        placeholder="Realm" 
-        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right"
-      >
-      <input 
-        type="text" 
-        [(ngModel)]="characterName" 
-        (ngModelChange)="onCharacterNameChange($event)"
-        placeholder="Character Name" 
-        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-left"
-      >
-      <button 
-        (click)="onFetchCharacter()" 
-        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out animate-bounce"
-      >
-        Fetch Character
+  <div class="container mx-auto flex flex-wrap items-center justify-between">
+    <div class="flex items-center space-x-4 mb-4 md:mb-0">
+      <h1 class="text-2xl font-bold animate-pulse">WCV</h1>
+      @if (characterProfile()) {
+        <div class="flex flex-col">
+          <h2 class="text-xl font-semibold" [style.color]="getClassColor(characterProfile()!.character_class.name)">
+            {{ characterProfile()?.name }}
+          </h2>
+          <p class="text-sm" [style.color]="getFactionColor(characterProfile()!.faction)">
+            {{ characterProfile()?.realm?.name }}
+          </p>
+        </div>
+      }
+    </div>
+    <div class="flex flex-wrap items-center space-x-2 w-full md:w-auto">
+      <input type="text" [ngModel]="realm()" (ngModelChange)="onRealmChange($event)" placeholder="Realm"
+        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right">
+      <input type="text" [ngModel]="characterName()" (ngModelChange)="onCharacterNameChange($event)"
+        placeholder="Character Name"
+        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-left">
+      <button (click)="onFetchCharacter()"
+        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out animate-bounce">
+        Fetch
       </button>
-      <button 
-        (click)="onAuthenticate()" 
-        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all duration-300 ease-in-out animate-pulse"
-      >
-        Authenticate
+      <button (click)="onLogout()"
+        class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300 ease-in-out animate-pulse">
+        Logout
       </button>
     </div>
   </div>
+  @if (errorMessage()) {
+    <div class="mt-4 text-red-500 animate-fade-in">
+      {{ errorMessage() }}
+    </div>
+  }
 </header>

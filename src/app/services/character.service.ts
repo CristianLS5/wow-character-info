@@ -171,4 +171,11 @@ export class CharacterService {
         !!this.characterProfileSignal()
     );
   }
+
+  clearCharacterData() {
+    this.characterProfileSignal.set(null);
+    this.characterEquipmentSignal.set(null);
+    this.characterMediaSignal.set(null);
+    // Clear any other relevant data
+  }
 }
