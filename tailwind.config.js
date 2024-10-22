@@ -18,6 +18,9 @@ module.exports = {
         "fade-in-4": "fadeIn 8s",
         'sway-left': 'swayLeft 1s ease-in-out infinite',
         'sway-right': 'swayRight 1s ease-in-out infinite',
+        'accordion-x': 'accordionX 0.5s ease-out forwards',
+        'fade-in-up': 'fade-in-up 0.5s ease-out',
+        'blur-in': 'blur-in 0.5s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -31,7 +34,19 @@ module.exports = {
         swayRight: {
           '0%, 100%': { transform: 'rotate(175deg) scale(1.2)' },
           '50%': { transform: 'rotate(185deg) scale(1.2)' },
-        }
+        },
+        accordionX: {
+          '0%': { opacity: '0', transform: 'translateX(-50px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'blur-in': {
+          '0%': { filter: 'blur(5px)', opacity: '0' },
+          '100%': { filter: 'blur(0)', opacity: '1' },
+        },
       },
       boxShadow: {
         'glow': '0 0 15px rgba(255, 255, 255, 0.5)',
@@ -39,6 +54,7 @@ module.exports = {
     },
   },
   plugins: [
+    require("daisyui"),
     animations, 
     addDynamicIconSelectors()
   ],

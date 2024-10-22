@@ -1,1 +1,56 @@
-<p>collections works!</p>
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+    <div class="p-4 overflow-y-auto h-full">
+        <h2 class="text-2xl font-bold mb-4">Total Mounts: {{ totalItems }}</h2>
+        <div class="mb-4 flex flex-col sm:flex-row gap-4 animate-fade-in-2">
+            <div class="relative">
+                <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+                    placeholder="Search mounts..."
+                    class="input input-bordered w-full max-w-xs bg-custom-card-bg text-custom-text border-custom-text focus:border-white focus:ring-2 focus:ring-white transition-all duration-300 ease-in-out pl-10">
+                <span
+                    class="absolute left-3 top-1/2 transform -translate-y-1/2 icon-[mdi--magnify] text-custom-text"></span>
+            </div>
+        </div>
+        @if (isLoading) {
+            <div class="flex justify-center items-center h-64">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                @for (mount of paginatedMounts; track mount.id; let i = $index) {
+                <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                    [style.animation-delay]="i * 0.1 + 's'">
+                    <div class="relative h-full">
+                        @if (mount.creatureMedia) {
+                            <img [src]="mount.creatureMedia" [alt]="mount.name" class="w-full h-full object-cover">
+                        }
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
+                            <h3 class="text-sm font-semibold truncate">{{ mount.name }}</h3>
+                        </div>
+                        <div class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                            <h3 class="text-lg font-semibold mb-2">{{ mount.name }}</h3>
+                            <p class="text-sm mb-2"><strong>Description:</strong> {{ mount.description }}</p>
+                            <p class="text-sm mb-2"><strong>Source:</strong> {{ mount.source.name }}</p>
+                            @if (mount.faction) {
+                                <p class="text-sm mb-2"><strong>Faction:</strong> {{ mount.faction.name }}</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="join">
+                    <button class="join-item btn" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">«</button>
+                    @for (page of getVisiblePageNumbers(); track page) {
+                    <button class="join-item btn"
+                        [ngClass]="{'btn-active': currentPage === page}"
+                        (click)="changePage(page)">
+                        {{ page }}
+                    </button>
+                    }
+                    <button class="join-item btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">»</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>

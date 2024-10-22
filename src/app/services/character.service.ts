@@ -102,12 +102,7 @@ export class CharacterService {
     return this.http.get<CharacterEquipment>(url).pipe(
       tap((data) => {
         console.log('Received character equipment data:', data);
-        if (data && data.equipped_items) {
-          data.equipped_items.forEach((item, index) => {
-            console.log(`Item ${index + 1}: ${item.name}`);
-            console.log(`Icon URL: ${item.iconUrl || 'Not available'}`);
-          });
-        }
+
         this.characterEquipmentSignal.set(data);
       }),
       catchError(this.handleError('character equipment'))
@@ -177,5 +172,16 @@ export class CharacterService {
     this.characterEquipmentSignal.set(null);
     this.characterMediaSignal.set(null);
     // Clear any other relevant data
+  }
+
+  getCharacterInfo(): { realmSlug: string; characterName: string } | null {
+    const profile = this.characterProfileSignal();
+    if (profile) {
+      return {
+        realmSlug: profile.realm.slug,
+        characterName: profile.name,
+      };
+    }
+    return null;
   }
 }
