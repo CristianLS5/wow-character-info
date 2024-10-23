@@ -37,4 +37,9 @@ export class CollectionsService {
     console.log(`Fetching creature media for ID: ${creatureDisplayId}`);
     return this.http.get(`${this.apiUrl}/creatures/${creatureDisplayId}/media`);
   }
+
+  getCollectedMounts(realmSlug: string, characterName: string): Observable<any> {
+    console.log(`Fetching collected mounts for ${characterName} on ${realmSlug}`);
+    return this.http.get<any>(`${this.apiUrl}/collections/${realmSlug}/${characterName}/mounts`);
+  }
 }

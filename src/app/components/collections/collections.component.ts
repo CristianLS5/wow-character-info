@@ -3,6 +3,7 @@ import { CollectionsService } from '../../services/collections.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, map, Observable } from 'rxjs';
+import { CharacterService } from '../../services/character.service';
 
 interface Asset {
   key: string;
@@ -43,6 +44,7 @@ interface Mount {
     };
   };
   creatureMedia?: string;
+  isCollected?: boolean;
 }
 
 @Component({
@@ -60,8 +62,13 @@ export class CollectionsComponent implements OnInit {
   itemsPerPage: number = 20;
   totalItems: number = 0;
   isLoading: boolean = true;
+  filterOptions = ['ALL', 'COLLECTED', 'NOT COLLECTED'];
+  selectedFilter = 'ALL';
 
-  constructor(private collectionsService: CollectionsService) {}
+  constructor(
+    private collectionsService: CollectionsService,
+    private characterService: CharacterService
+  ) {}
 
   ngOnInit(): void {
     this.loadMounts();
@@ -69,22 +76,51 @@ export class CollectionsComponent implements OnInit {
 
   loadMounts(): void {
     this.isLoading = true;
-    this.collectionsService.getAllMountsWithDetails().subscribe({
-      next: (data: Mount[]) => {
-        console.log('Received mount data:', data);
-        this.mounts = data;
-        this.loadCreatureMedia(); // Call this here
+    const characterInfo = this.characterService.getCharacterInfo();
+    
+    if (!characterInfo) {
+      console.error('Character information not available');
+      this.isLoading = false;
+      return;
+    }
+
+    const { realmSlug, characterName } = characterInfo;
+
+    forkJoin({
+      allMounts: this.collectionsService.getAllMountsWithDetails(),
+      collectedMounts: this.collectionsService.getCollectedMounts(realmSlug, characterName)
+    }).subscribe({
+      next: ({ allMounts, collectedMounts }) => {
+        const collectedMountIds = collectedMounts.mounts.map((mount: any) => mount.mount.id);
+        this.mounts = allMounts.map(mount => ({
+          ...mount,
+          isCollected: collectedMountIds.includes(mount.id)
+        }));
+        this.loadCreatureMedia();
       },
       error: (error) => {
         console.error('Error loading mounts:', error);
         this.isLoading = false;
-      },
+      }
     });
+  }
+
+  onFilterChange(filter: string): void {
+    this.selectedFilter = filter;
+    this.filterMounts();
   }
 
   filterMounts(): void {
     this.filteredMounts = this.mounts.filter((mount) => {
-      return mount.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const nameMatch = mount.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+      switch (this.selectedFilter) {
+        case 'COLLECTED':
+          return nameMatch && mount.isCollected;
+        case 'NOT COLLECTED':
+          return nameMatch && !mount.isCollected;
+        default:
+          return nameMatch;
+      }
     });
     this.totalItems = this.filteredMounts.length;
     this.currentPage = 1;
