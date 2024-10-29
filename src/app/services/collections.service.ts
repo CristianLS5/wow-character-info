@@ -34,7 +34,6 @@ export class CollectionsService {
   }
 
   getCreatureMedia(creatureDisplayId: number): Observable<any> {
-    console.log(`Fetching creature media for ID: ${creatureDisplayId}`);
     return this.http.get(`${this.apiUrl}/creatures/${creatureDisplayId}/media`);
   }
 
