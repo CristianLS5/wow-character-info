@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, map, Observable } from 'rxjs';
 import { CharacterService } from '../../services/character.service';
+import { PET_TYPES } from '../../interfaces/pet.interface';
 
 interface Asset {
   key: string;
@@ -59,6 +60,12 @@ interface Pet {
   is_capturable: boolean;
   is_tradable: boolean;
   is_battlepet: boolean;
+  is_alliance_only?: boolean;
+  is_horde_only?: boolean;
+  source?: {
+    name: string;
+    type: string;
+  };
   abilities?: Array<{
     ability: {
       name: string;
@@ -86,7 +93,6 @@ export class CollectionsComponent implements OnInit {
   searchQuery: string = '';
   currentPage: number = 1;
   itemsPerPage: number = 20;
-  totalItems: number = 0;
   isLoading: boolean = true;
   filterOptions = ['ALL', 'COLLECTED', 'NOT COLLECTED'];
   selectedFilter = 'ALL';
@@ -106,8 +112,13 @@ export class CollectionsComponent implements OnInit {
 
   switchTab(tab: 'mounts' | 'pets'): void {
     this.activeTab = tab;
+    this.searchQuery = '';
     if (tab === 'pets' && this.pets.length === 0) {
       this.loadPets();
+    } else if (tab === 'mounts') {
+      this.filterMounts();
+    } else {
+      this.filterPets();
     }
   }
 
@@ -166,13 +177,15 @@ export class CollectionsComponent implements OnInit {
           return nameMatch;
       }
     });
-    this.totalItems = this.filteredMounts.length;
     this.currentPage = 1;
-    console.log('Filtered Mounts:', this.filteredMounts.length);
   }
 
   onSearchChange(): void {
-    this.filterMounts();
+    if (this.activeTab === 'mounts') {
+      this.filterMounts();
+    } else {
+      this.filterPets();
+    }
   }
 
   changePage(page: number): void {
@@ -272,12 +285,22 @@ export class CollectionsComponent implements OnInit {
         .includes(this.searchQuery.toLowerCase());
       return nameMatch;
     });
-    this.totalItems = this.filteredPets.length;
     this.currentPage = 1;
   }
 
   get paginatedPets(): Pet[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     return this.filteredPets.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  getPetTypeIcon(typeId: number): string {
+    const basePath = '../../assets/pet-families/';
+    return `${basePath}${PET_TYPES[typeId]?.iconPath || 'default.png'}`;
+  }
+
+  get totalItems(): number {
+    return this.activeTab === 'mounts' 
+      ? this.filteredMounts.length 
+      : this.filteredPets.length;
   }
 }
