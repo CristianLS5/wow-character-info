@@ -1,6 +1,24 @@
 <div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
     <div class="p-4 overflow-y-auto h-full">
-        <h2 class="text-2xl font-bold mb-4">Total Mounts: {{ totalItems }}</h2>
+        <!-- Tabs -->
+        <div class="tabs tabs-boxed bg-custom-card-bg mb-4 animate-fade-in-1">
+            <button class="tab" 
+                    [class.tab-active]="activeTab === 'mounts'"
+                    (click)="switchTab('mounts')">
+                Mounts
+            </button>
+            <button class="tab" 
+                    [class.tab-active]="activeTab === 'pets'"
+                    (click)="switchTab('pets')">
+                Pets
+            </button>
+        </div>
+
+        <h2 class="text-2xl font-bold mb-4">
+            Total {{ activeTab === 'mounts' ? 'Mounts' : 'Pets' }}: {{ totalItems }}
+        </h2>
+
+        <!-- Search and Filter Section -->
         <div class="mb-4 flex flex-col sm:flex-row gap-4 animate-fade-in-2">
             <div class="relative">
                 <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
@@ -9,45 +27,79 @@
                 <span
                     class="absolute left-3 top-1/2 transform -translate-y-1/2 icon-[mdi--magnify] text-custom-text"></span>
             </div>
-            <div class="dropdown dropdown-hover">
-                <label tabindex="0" class="btn bg-custom-card-bg text-custom-text hover:bg-custom-bg">{{ selectedFilter }}</label>
-                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-custom-card-bg rounded-box w-52">
-                    @for (option of filterOptions; track option) {
-                        <li><a (click)="onFilterChange(option)" [class.active]="selectedFilter === option">{{ option }}</a></li>
-                    }
-                </ul>
-            </div>
+            @if (activeTab === 'mounts') {
+                <div class="dropdown dropdown-hover">
+                    <label tabindex="0" class="btn bg-custom-card-bg text-custom-text hover:bg-custom-bg">{{ selectedFilter }}</label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-custom-card-bg rounded-box w-52">
+                        @for (option of filterOptions; track option) {
+                            <li><a (click)="onFilterChange(option)" [class.active]="selectedFilter === option">{{ option }}</a></li>
+                        }
+                    </ul>
+                </div>
+            }
         </div>
+
         @if (isLoading) {
             <div class="flex justify-center items-center h-64">
                 <span class="loading loading-spinner loading-lg"></span>
             </div>
         } @else {
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
-                @for (mount of paginatedMounts; track mount.id; let i = $index) {
-                <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
-                    [class.not-collected]="!mount.isCollected"
-                    [style.animation-delay]="i * 0.1 + 's'">
-                    <div class="relative h-full">
-                        @if (mount.creatureMedia) {
-                            <img [src]="mount.creatureMedia" [alt]="mount.name" class="w-full h-full object-cover">
-                        }
-                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
-                            <h3 class="text-sm font-semibold truncate">{{ mount.name }}</h3>
-                        </div>
-                        <div class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
-                            <h3 class="text-lg font-semibold mb-2">{{ mount.name }}</h3>
-                            <p class="text-sm mb-2"><strong>Description:</strong> {{ mount.description }}</p>
-                            <p class="text-sm mb-2"><strong>Source:</strong> {{ mount.source.name }}</p>
-                            @if (mount.faction) {
-                                <p class="text-sm mb-2"><strong>Faction:</strong> {{ mount.faction.name }}</p>
+            @if (activeTab === 'mounts') {
+                <!-- Existing mounts grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                    @for (mount of paginatedMounts; track mount.id; let i = $index) {
+                    <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                        [class.not-collected]="!mount.isCollected"
+                        [style.animation-delay]="i * 0.1 + 's'">
+                        <div class="relative h-full">
+                            @if (mount.creatureMedia) {
+                                <img [src]="mount.creatureMedia" [alt]="mount.name" class="w-full h-full object-cover">
                             }
-                            <p class="text-sm mb-2"><strong>Status:</strong> {{ mount.isCollected ? 'Collected' : 'Not Collected' }}</p>
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
+                                <h3 class="text-sm font-semibold truncate">{{ mount.name }}</h3>
+                            </div>
+                            <div class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                                <h3 class="text-lg font-semibold mb-2">{{ mount.name }}</h3>
+                                <p class="text-sm mb-2"><strong>Description:</strong> {{ mount.description }}</p>
+                                <p class="text-sm mb-2"><strong>Source:</strong> {{ mount.source.name }}</p>
+                                @if (mount.faction) {
+                                    <p class="text-sm mb-2"><strong>Faction:</strong> {{ mount.faction.name }}</p>
+                                }
+                                <p class="text-sm mb-2"><strong>Status:</strong> {{ mount.isCollected ? 'Collected' : 'Not Collected' }}</p>
+                            </div>
                         </div>
                     </div>
+                    }
                 </div>
-                }
-            </div>
+            } @else {
+                <!-- Pets grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                    @for (pet of paginatedPets; track pet.id; let i = $index) {
+                    <div class="bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                         [style.animation-delay]="i * 0.1 + 's'">
+                        <div class="relative h-full">
+                            @if (pet.media.assets) {
+                                <img [src]="pet.media.assets[0].value" 
+                                     [alt]="pet.name" 
+                                     class="w-full h-full object-cover">
+                            }
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
+                                <h3 class="text-sm font-semibold truncate">{{ pet.name }}</h3>
+                            </div>
+                            <div class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                                <h3 class="text-lg font-semibold mb-2">{{ pet.name }}</h3>
+                                <p class="text-sm mb-2"><strong>Type:</strong> {{ pet.battle_pet_type.name }}</p>
+                                <p class="text-sm mb-2"><strong>Description:</strong> {{ pet.description }}</p>
+                                <p class="text-sm mb-2"><strong>Capturable:</strong> {{ pet.is_capturable ? 'Yes' : 'No' }}</p>
+                                <p class="text-sm mb-2"><strong>Tradable:</strong> {{ pet.is_tradable ? 'Yes' : 'No' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+            }
+
+            <!-- Pagination -->
             <div class="flex justify-center mt-4 animate-fade-in-up">
                 <div class="join shadow-md">
                     <button class="join-item btn bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300" 

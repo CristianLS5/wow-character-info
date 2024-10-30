@@ -47,6 +47,32 @@ interface Mount {
   isCollected?: boolean;
 }
 
+interface Pet {
+  id: number;
+  name: string;
+  battle_pet_type: {
+    id: number;
+    type: string;
+    name: string;
+  };
+  description: string;
+  is_capturable: boolean;
+  is_tradable: boolean;
+  is_battlepet: boolean;
+  abilities?: Array<{
+    ability: {
+      name: string;
+      id: number;
+    };
+    slot: number;
+    required_level: number;
+  }>;
+  media: {
+    id: number;
+    assets: Asset[];
+  };
+}
+
 @Component({
   selector: 'app-collections',
   standalone: true,
@@ -65,6 +91,10 @@ export class CollectionsComponent implements OnInit {
   filterOptions = ['ALL', 'COLLECTED', 'NOT COLLECTED'];
   selectedFilter = 'ALL';
 
+  activeTab: 'mounts' | 'pets' = 'mounts';
+  pets: Pet[] = [];
+  filteredPets: Pet[] = [];
+
   constructor(
     private collectionsService: CollectionsService,
     private characterService: CharacterService
@@ -74,10 +104,17 @@ export class CollectionsComponent implements OnInit {
     this.loadMounts();
   }
 
+  switchTab(tab: 'mounts' | 'pets'): void {
+    this.activeTab = tab;
+    if (tab === 'pets' && this.pets.length === 0) {
+      this.loadPets();
+    }
+  }
+
   loadMounts(): void {
     this.isLoading = true;
     const characterInfo = this.characterService.getCharacterInfo();
-    
+
     if (!characterInfo) {
       console.error('Character information not available');
       this.isLoading = false;
@@ -88,20 +125,25 @@ export class CollectionsComponent implements OnInit {
 
     forkJoin({
       allMounts: this.collectionsService.getAllMountsWithDetails(),
-      collectedMounts: this.collectionsService.getCollectedMounts(realmSlug, characterName)
+      collectedMounts: this.collectionsService.getCollectedMounts(
+        realmSlug,
+        characterName
+      ),
     }).subscribe({
       next: ({ allMounts, collectedMounts }) => {
-        const collectedMountIds = collectedMounts.mounts.map((mount: any) => mount.mount.id);
-        this.mounts = allMounts.map(mount => ({
+        const collectedMountIds = collectedMounts.mounts.map(
+          (mount: any) => mount.mount.id
+        );
+        this.mounts = allMounts.map((mount) => ({
           ...mount,
-          isCollected: collectedMountIds.includes(mount.id)
+          isCollected: collectedMountIds.includes(mount.id),
         }));
         this.loadCreatureMedia();
       },
       error: (error) => {
         console.error('Error loading mounts:', error);
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -112,7 +154,9 @@ export class CollectionsComponent implements OnInit {
 
   filterMounts(): void {
     this.filteredMounts = this.mounts.filter((mount) => {
-      const nameMatch = mount.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const nameMatch = mount.name
+        .toLowerCase()
+        .includes(this.searchQuery.toLowerCase());
       switch (this.selectedFilter) {
         case 'COLLECTED':
           return nameMatch && mount.isCollected;
@@ -167,18 +211,30 @@ export class CollectionsComponent implements OnInit {
   }
 
   loadCreatureMedia(): void {
-    const creatureMediaRequests: Observable<{ mountId: number; creatureDisplayId: number; media: CreatureMedia }>[] = this.mounts.map(mount => 
-      this.collectionsService.getCreatureMedia(mount.creature_displays[0].id).pipe(
-        map(media => ({ mountId: mount.id, creatureDisplayId: mount.creature_displays[0].id, media }))
-      )
+    const creatureMediaRequests: Observable<{
+      mountId: number;
+      creatureDisplayId: number;
+      media: CreatureMedia;
+    }>[] = this.mounts.map((mount) =>
+      this.collectionsService
+        .getCreatureMedia(mount.creature_displays[0].id)
+        .pipe(
+          map((media) => ({
+            mountId: mount.id,
+            creatureDisplayId: mount.creature_displays[0].id,
+            media,
+          }))
+        )
     );
 
     forkJoin(creatureMediaRequests).subscribe({
       next: (results) => {
-        results.forEach(result => {
-          const mount = this.mounts.find(m => m.id === result.mountId);
+        results.forEach((result) => {
+          const mount = this.mounts.find((m) => m.id === result.mountId);
           if (mount && result.media.assets && result.media.assets.length > 0) {
-            const zoomAsset = result.media.assets.find((asset: Asset) => asset.key === 'zoom');
+            const zoomAsset = result.media.assets.find(
+              (asset: Asset) => asset.key === 'zoom'
+            );
             if (zoomAsset) {
               mount.creatureMedia = zoomAsset.value;
             }
@@ -192,5 +248,36 @@ export class CollectionsComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  loadPets(): void {
+    this.isLoading = true;
+    this.collectionsService.getAllPetsWithDetails().subscribe({
+      next: (pets: Pet[]) => {
+        this.pets = pets;
+        this.filterPets();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading pets:', error);
+        this.isLoading = false;
+      },
+    });
+  }
+
+  filterPets(): void {
+    this.filteredPets = this.pets.filter((pet) => {
+      const nameMatch = pet.name
+        .toLowerCase()
+        .includes(this.searchQuery.toLowerCase());
+      return nameMatch;
+    });
+    this.totalItems = this.filteredPets.length;
+    this.currentPage = 1;
+  }
+
+  get paginatedPets(): Pet[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredPets.slice(startIndex, startIndex + this.itemsPerPage);
   }
 }
