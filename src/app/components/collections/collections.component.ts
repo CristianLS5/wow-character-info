@@ -2,7 +2,15 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CollectionsService } from '../../services/collections.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, map, Observable, Subject, Subscription, takeUntil, finalize } from 'rxjs';
+import {
+  forkJoin,
+  map,
+  Observable,
+  Subject,
+  Subscription,
+  takeUntil,
+  finalize,
+} from 'rxjs';
 import { CharacterService } from '../../services/character.service';
 import { PET_TYPES } from '../../interfaces/pet.interface';
 
@@ -84,6 +92,13 @@ interface Pet {
     key: {
       href: string;
     };
+  };
+  creature?: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
   };
   icon: string;
   creatureMedia?: string;
@@ -436,7 +451,10 @@ export class CollectionsComponent implements OnInit, OnDestroy {
 
     forkJoin({
       allToys: this.collectionsService.getAllToysWithDetails(),
-      collectedToys: this.collectionsService.getCollectedToys(realmSlug, characterName)
+      collectedToys: this.collectionsService.getCollectedToys(
+        realmSlug,
+        characterName
+      ),
     })
       .pipe(
         takeUntil(this.destroy$),
@@ -447,38 +465,37 @@ export class CollectionsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: ({ allToys, collectedToys }) => {
           // Extract collected toy IDs
-          const collectedToyIds = collectedToys?.toys?.map(
-            (toy: any) => toy?.toy?.id
-          ) || [];
+          const collectedToyIds =
+            collectedToys?.toys?.map((toy: any) => toy?.toy?.id) || [];
 
           console.log('Collected toys count:', collectedToyIds.length);
 
           // Map the toys with the correct data structure
           this.toys = allToys
-            .filter(toy => toy?.data && toy.data.id && toy.data.item?.name)
+            .filter((toy) => toy?.data && toy.data.id && toy.data.item?.name)
             .map((toy) => ({
               id: toy.data.id,
               name: toy.data.item.name,
               item: {
                 id: toy.data.item.id,
-                key: toy.data.item.key
+                key: toy.data.item.key,
               },
               description: toy.data.source_description || '',
               source: toy.data.source || { type: 'Unknown', name: 'Unknown' },
               is_alliance_only: false,
               is_horde_only: false,
               media: {
-                assets: toy.data.media?.assets || []
+                assets: toy.data.media?.assets || [],
               },
               isCollected: collectedToyIds.includes(toy.data.id),
-              displayMedia: toy.data.media?.assets?.[0]?.value || ''
+              displayMedia: toy.data.media?.assets?.[0]?.value || '',
             }));
 
           console.log('Processed toys summary:', {
             total: this.toys.length,
-            collected: this.toys.filter(t => t.isCollected).length,
-            notCollected: this.toys.filter(t => !t.isCollected).length,
-            firstToy: this.toys[0]
+            collected: this.toys.filter((t) => t.isCollected).length,
+            notCollected: this.toys.filter((t) => !t.isCollected).length,
+            firstToy: this.toys[0],
           });
 
           this.filterToys();
@@ -486,7 +503,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading toys:', error);
           this.isLoading = false;
-        }
+        },
       });
   }
 
@@ -494,7 +511,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     console.log('Filtering toys:', {
       totalToys: this.toys.length,
       searchQuery: this.searchQuery,
-      selectedFilter: this.selectedFilter
+      selectedFilter: this.selectedFilter,
     });
 
     this.filteredToys = this.toys.filter((toy) => {
@@ -514,8 +531,8 @@ export class CollectionsComponent implements OnInit, OnDestroy {
 
     console.log('Filtering results:', {
       totalFiltered: this.filteredToys.length,
-      collected: this.filteredToys.filter(t => t.isCollected).length,
-      notCollected: this.filteredToys.filter(t => !t.isCollected).length
+      collected: this.filteredToys.filter((t) => t.isCollected).length,
+      notCollected: this.filteredToys.filter((t) => !t.isCollected).length,
     });
 
     this.currentPage = 1;
@@ -537,7 +554,19 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     return paginatedItems;
   }
 
-  openWowheadLink(itemId: number): void {
+  openMountWowheadLink(mountId: number): void {
+    const url = `https://www.wowhead.com/mount=${mountId}`;
+    window.open(url, '_blank');
+  }
+
+  openPetWowheadLink(petId: number | undefined): void {
+    if (petId) {
+      const url = `https://www.wowhead.com/npc=${petId}`;
+      window.open(url, '_blank');
+    }
+  }
+
+  openToyWowheadLink(itemId: number): void {
     const url = `https://www.wowhead.com/item=${itemId}`;
     window.open(url, '_blank');
   }

@@ -119,7 +119,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
                 @for (mount of paginatedMounts; track mount.id; let i = $index) {
                 <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
-                    [class.not-collected]="!mount.isCollected" [style.animation-delay]="i * 0.1 + 's'">
+                    [class.not-collected]="!mount.isCollected" [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openMountWowheadLink(mount.id)">
                     <div class="relative h-full">
                         @if (mount.creatureMedia) {
                         <img [src]="mount.creatureMedia" [alt]="mount.name" class="w-full h-full object-cover">
@@ -146,9 +147,10 @@
             <!-- Pets grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
                 @for (pet of paginatedPets; track pet.id; let i = $index) {
-                <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden cursor-pointer"
                     [class.not-collected]="!pet.isCollected"
-                    [style.animation-delay]="i * 0.1 + 's'">
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openPetWowheadLink(pet?.creature?.id)">
                     <div class="relative h-full">
                         <img [src]="pet.displayMedia" 
                              [alt]="pet.name" 
@@ -200,7 +202,7 @@
                 <div class="toy-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden cursor-pointer"
                     [class.not-collected]="!toy.isCollected"
                     [style.animation-delay]="i * 0.1 + 's'"
-                    (click)="openWowheadLink(toy.item.id)">
+                    (click)="openToyWowheadLink(toy.item.id)">
                     <div class="relative h-full">
                         <img [src]="toy.displayMedia" 
                              [alt]="toy.name" 
