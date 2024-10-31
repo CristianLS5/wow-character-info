@@ -67,3 +67,52 @@ export const PET_TYPES: { [key: number]: PetType } = {
     iconPath: 'mechanical.png',
   },
 };
+
+export interface Asset {
+  key: string;
+  value: string;
+}
+
+export interface CreatureMedia {
+  assets: Asset[];
+}
+
+export interface CreatureMediaResponse {
+  _links: {
+    self: {
+      href: string;
+    };
+  };
+  assets: Asset[];
+  id: number;
+}
+
+export interface CollectedPet {
+  species: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
+  };
+  level: number;
+  quality: {
+    type: string;
+    name: string;
+  };
+  stats: {
+    breed_id: number;
+    health: number;
+    power: number;
+    speed: number;
+  };
+  is_favorite: boolean;
+  creature_display?: {
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+  id: number;
+  creatureMedia?: string;
+}

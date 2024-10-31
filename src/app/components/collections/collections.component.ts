@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CollectionsService } from '../../services/collections.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, map, Observable } from 'rxjs';
+import { forkJoin, map, Observable, Subject, Subscription, takeUntil, finalize } from 'rxjs';
 import { CharacterService } from '../../services/character.service';
 import { PET_TYPES } from '../../interfaces/pet.interface';
 
@@ -78,6 +78,16 @@ interface Pet {
     id: number;
     assets: Asset[];
   };
+  isCollected?: boolean;
+  creature_display?: {
+    id: number;
+    key: {
+      href: string;
+    };
+  };
+  icon: string;
+  creatureMedia?: string;
+  displayMedia?: string;
 }
 
 @Component({
@@ -87,7 +97,7 @@ interface Pet {
   templateUrl: './collections.component.html',
   styleUrls: ['./collections.component.sass'],
 })
-export class CollectionsComponent implements OnInit {
+export class CollectionsComponent implements OnInit, OnDestroy {
   mounts: Mount[] = [];
   filteredMounts: Mount[] = [];
   searchQuery: string = '';
@@ -101,6 +111,9 @@ export class CollectionsComponent implements OnInit {
   pets: Pet[] = [];
   filteredPets: Pet[] = [];
 
+  private destroy$ = new Subject<void>();
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private collectionsService: CollectionsService,
     private characterService: CharacterService
@@ -108,6 +121,12 @@ export class CollectionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMounts();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   switchTab(tab: 'mounts' | 'pets'): void {
@@ -160,7 +179,11 @@ export class CollectionsComponent implements OnInit {
 
   onFilterChange(filter: string): void {
     this.selectedFilter = filter;
-    this.filterMounts();
+    if (this.activeTab === 'mounts') {
+      this.filterMounts();
+    } else {
+      this.filterPets();
+    }
   }
 
   filterMounts(): void {
@@ -265,17 +288,55 @@ export class CollectionsComponent implements OnInit {
 
   loadPets(): void {
     this.isLoading = true;
-    this.collectionsService.getAllPetsWithDetails().subscribe({
-      next: (pets: Pet[]) => {
-        this.pets = pets;
-        this.filterPets();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading pets:', error);
-        this.isLoading = false;
-      },
-    });
+    const characterInfo = this.characterService.getCharacterInfo();
+
+    if (!characterInfo) {
+      console.error('Character information not available');
+      this.isLoading = false;
+      return;
+    }
+
+    const { realmSlug, characterName } = characterInfo;
+
+    const subscription = forkJoin({
+      allPets: this.collectionsService.getAllPetsWithDetails(),
+      collectedPets: this.collectionsService.getCollectedPets(
+        realmSlug,
+        characterName
+      ),
+    })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.isLoading = false))
+      )
+      .subscribe({
+        next: ({ allPets, collectedPets }) => {
+          const collectedPetIds = (collectedPets || []).map(
+            (pet) => pet.species?.id
+          );
+
+          this.pets = allPets.map((pet) => {
+            const collectedPet = collectedPets.find(
+              (cp) => cp.species?.id === pet.id
+            );
+            return {
+              ...pet,
+              isCollected: collectedPetIds.includes(pet.id),
+              creatureMedia: collectedPet?.creatureMedia,
+              // Use creatureMedia only if it exists, otherwise fall back to icon
+              displayMedia: collectedPet?.creatureMedia || pet.icon,
+            };
+          });
+
+          this.filterPets();
+        },
+        error: (error) => {
+          console.error('Error loading pets:', error);
+          this.isLoading = false;
+        },
+      });
+
+    this.subscriptions.push(subscription);
   }
 
   filterPets(): void {
@@ -283,7 +344,14 @@ export class CollectionsComponent implements OnInit {
       const nameMatch = pet.name
         .toLowerCase()
         .includes(this.searchQuery.toLowerCase());
-      return nameMatch;
+      switch (this.selectedFilter) {
+        case 'COLLECTED':
+          return nameMatch && pet.isCollected;
+        case 'NOT COLLECTED':
+          return nameMatch && !pet.isCollected;
+        default:
+          return nameMatch;
+      }
     });
     this.currentPage = 1;
   }
@@ -299,8 +367,8 @@ export class CollectionsComponent implements OnInit {
   }
 
   get totalItems(): number {
-    return this.activeTab === 'mounts' 
-      ? this.filteredMounts.length 
+    return this.activeTab === 'mounts'
+      ? this.filteredMounts.length
       : this.filteredPets.length;
   }
 }
