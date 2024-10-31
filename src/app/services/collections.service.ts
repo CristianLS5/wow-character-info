@@ -36,7 +36,9 @@ export class CollectionsService {
     return this.http.get(`${this.apiUrl}/mounts/${mountId}`);
   }
 
-  getCreatureMedia(creatureDisplayId: number): Observable<CreatureMediaResponse> {
+  getCreatureMedia(
+    creatureDisplayId: number
+  ): Observable<CreatureMediaResponse> {
     return this.http.get<CreatureMediaResponse>(
       `${this.apiUrl}/creatures/${creatureDisplayId}/media`
     );
@@ -71,54 +73,72 @@ export class CollectionsService {
     return this.http.get(`${this.apiUrl}/pets/${petId}`);
   }
 
-  getCollectedPets(realmSlug: string, characterName: string): Observable<CollectedPet[]> {
+  getCollectedPets(
+    realmSlug: string,
+    characterName: string
+  ): Observable<CollectedPet[]> {
     console.log(`Fetching collected pets for ${characterName} on ${realmSlug}`);
-    
-    return this.http.get<{ pets: CollectedPet[] }>(
-      `${this.apiUrl}/collections/${realmSlug}/${characterName}/pets`
-    ).pipe(
-      map(response => {
-        const pets = response.pets || [];
-        return pets;
-      }),
-      switchMap(pets => {
-        if (!pets.length) return of([]);
-        
-        const batchSize = 5;
-        const batches = [];
-        
-        // Process all pets since backend handles invalid IDs
-        for (let i = 0; i < pets.length; i += batchSize) {
-          const batch = pets.slice(i, i + batchSize);
-          batches.push(batch);
-        }
 
-        return from(batches).pipe(
-          concatMap(batch => {
-            const batchObservables = batch.map(pet => {
-              if (pet.creature_display?.id) {
-                return this.getCreatureMedia(pet.creature_display.id).pipe(
-                  map(mediaResponse => ({
-                    ...pet,
-                    // Only set creatureMedia if assets exist and have values
-                    creatureMedia: mediaResponse?.assets?.length > 0 
-                      ? mediaResponse.assets[0].value 
-                      : undefined
-                  })),
-                  catchError(() => {
-                    // Return pet without media if request fails
-                    return of(pet);
-                  })
-                );
-              }
-              return of(pet);
-            });
+    return this.http
+      .get<{ pets: CollectedPet[] }>(
+        `${this.apiUrl}/collections/${realmSlug}/${characterName}/pets`
+      )
+      .pipe(
+        map((response) => {
+          const pets = response.pets || [];
+          return pets;
+        }),
+        switchMap((pets) => {
+          if (!pets.length) return of([]);
 
-            return forkJoin(batchObservables);
-          }),
-          scan((acc, batch) => [...acc, ...batch], [] as CollectedPet[])
-        );
-      })
+          const batchSize = 5;
+          const batches = [];
+
+          // Process all pets since backend handles invalid IDs
+          for (let i = 0; i < pets.length; i += batchSize) {
+            const batch = pets.slice(i, i + batchSize);
+            batches.push(batch);
+          }
+
+          return from(batches).pipe(
+            concatMap((batch) => {
+              const batchObservables = batch.map((pet) => {
+                if (pet.creature_display?.id) {
+                  return this.getCreatureMedia(pet.creature_display.id).pipe(
+                    map((mediaResponse) => ({
+                      ...pet,
+                      // Only set creatureMedia if assets exist and have values
+                      creatureMedia:
+                        mediaResponse?.assets?.length > 0
+                          ? mediaResponse.assets[0].value
+                          : undefined,
+                    })),
+                    catchError(() => {
+                      // Return pet without media if request fails
+                      return of(pet);
+                    })
+                  );
+                }
+                return of(pet);
+              });
+
+              return forkJoin(batchObservables);
+            }),
+            scan((acc, batch) => [...acc, ...batch], [] as CollectedPet[])
+          );
+        })
+      );
+  }
+
+  getAllToysWithDetails(): Observable<any[]> {
+    console.log('Fetching all toys with details');
+    return this.http.get<any[]>(`${this.apiUrl}/toys/all`);
+  }
+  
+  getCollectedToys(realmSlug: string, characterName: string): Observable<any> {
+    console.log(`Fetching collected toys for ${characterName} on ${realmSlug}`);
+    return this.http.get<any>(
+      `${this.apiUrl}/collections/${realmSlug}/${characterName}/toys`
     );
   }
 }

@@ -2,10 +2,11 @@
     <div class="p-4 overflow-y-auto h-full">
         <!-- Tabs -->
         <div class="flex justify-center gap-8 mb-4 border-b border-custom-card-bg">
+            <!-- Mount tab button -->
             <button 
                 class="px-8 py-3 text-lg relative transition-all duration-300"
                 [ngClass]="[
-                    !activeTab.includes('pets') 
+                    activeTab === 'mounts'
                         ? 'text-[#4287f5] font-bold' 
                         : 'text-white/70 hover:text-white'
                 ]"
@@ -13,7 +14,7 @@
                 <span>Mounts</span>
                 <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
                      [ngClass]="[
-                         !activeTab.includes('pets')
+                         activeTab === 'mounts'
                              ? 'scale-x-100 bg-[#4287f5]'
                              : 'bg-white'
                      ]"></div>
@@ -21,7 +22,7 @@
             <button 
                 class="px-8 py-3 text-lg relative transition-all duration-300"
                 [ngClass]="[
-                    activeTab.includes('pets')
+                    activeTab === 'pets'
                         ? 'text-[#4287f5] font-bold'
                         : 'text-white/70 hover:text-white'
                 ]"
@@ -29,7 +30,23 @@
                 <span>Pets</span>
                 <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
                      [ngClass]="[
-                         activeTab.includes('pets')
+                         activeTab === 'pets'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'toys'
+                        ? 'text-[#4287f5] font-bold'
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('toys')">
+                <span>Toys</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'toys'
                              ? 'scale-x-100 bg-[#4287f5]'
                              : 'bg-white'
                      ]"></div>
@@ -125,7 +142,7 @@
                 </div>
                 }
             </div>
-            } @else {
+            } @else if (activeTab === 'pets') {
             <!-- Pets grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
                 @for (pet of paginatedPets; track pet.id; let i = $index) {
@@ -171,6 +188,42 @@
                             <!-- Add Status -->
                             <p class="text-sm mb-2">
                                 <strong>Status:</strong> {{ pet.isCollected ? 'Collected' : 'Not Collected' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else if (activeTab === 'toys') {
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 animate-fade-in-3">
+                @for (toy of paginatedToys; track toy.id; let i = $index) {
+                <div class="toy-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden cursor-pointer"
+                    [class.not-collected]="!toy.isCollected"
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openWowheadLink(toy.item.id)">
+                    <div class="relative h-full">
+                        <img [src]="toy.displayMedia" 
+                             [alt]="toy.name" 
+                             [class.toy-icon]="!toy.isCollected"
+                             class="w-full h-full object-contain p-1">
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-center">
+                            <h3 class="text-xs font-semibold truncate">{{ toy.name }}</h3>
+                        </div>
+                        <!-- Hover overlay -->
+                        <div class="absolute inset-0 bg-black bg-opacity-90 text-white p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                            <h3 class="text-sm font-semibold mb-1">{{ toy.name }}</h3>
+                            <p class="text-xs mb-1"><strong>Source:</strong> {{ toy.source.name }}</p>
+                            <p class="text-xs mb-1"><strong>Description:</strong> {{ toy.description }}</p>
+                            @if (toy.is_alliance_only || toy.is_horde_only) {
+                            <p class="text-xs mb-1" [ngClass]="{
+                                'text-blue-400': toy.is_alliance_only,
+                                'text-red-500': toy.is_horde_only
+                            }">
+                                {{ toy.is_alliance_only ? 'Alliance Only' : 'Horde Only' }}
+                            </p>
+                            }
+                            <p class="text-xs">
+                                <strong>Status:</strong> {{ toy.isCollected ? 'Collected' : 'Not Collected' }}
                             </p>
                         </div>
                     </div>

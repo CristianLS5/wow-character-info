@@ -90,6 +90,29 @@ interface Pet {
   displayMedia?: string;
 }
 
+interface Toy {
+  id: number;
+  name: string;
+  item: {
+    id: number;
+    key: {
+      href: string;
+    };
+  };
+  source: {
+    type: string;
+    name: string;
+  };
+  description?: string;
+  is_alliance_only?: boolean;
+  is_horde_only?: boolean;
+  media: {
+    assets: Asset[];
+  };
+  isCollected?: boolean;
+  displayMedia?: string;
+}
+
 @Component({
   selector: 'app-collections',
   standalone: true,
@@ -107,9 +130,11 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   filterOptions = ['ALL', 'COLLECTED', 'NOT COLLECTED'];
   selectedFilter = 'ALL';
 
-  activeTab: 'mounts' | 'pets' = 'mounts';
+  activeTab: 'mounts' | 'pets' | 'toys' = 'mounts';
   pets: Pet[] = [];
   filteredPets: Pet[] = [];
+  toys: Toy[] = [];
+  filteredToys: Toy[] = [];
 
   private destroy$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
@@ -129,15 +154,20 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  switchTab(tab: 'mounts' | 'pets'): void {
+  switchTab(tab: 'mounts' | 'pets' | 'toys'): void {
     this.activeTab = tab;
     this.searchQuery = '';
-    if (tab === 'pets' && this.pets.length === 0) {
-      this.loadPets();
-    } else if (tab === 'mounts') {
-      this.filterMounts();
-    } else {
-      this.filterPets();
+    switch (tab) {
+      case 'pets':
+        if (this.pets.length === 0) this.loadPets();
+        else this.filterPets();
+        break;
+      case 'toys':
+        if (this.toys.length === 0) this.loadToys();
+        else this.filterToys();
+        break;
+      default:
+        this.filterMounts();
     }
   }
 
@@ -179,10 +209,16 @@ export class CollectionsComponent implements OnInit, OnDestroy {
 
   onFilterChange(filter: string): void {
     this.selectedFilter = filter;
-    if (this.activeTab === 'mounts') {
-      this.filterMounts();
-    } else {
-      this.filterPets();
+    switch (this.activeTab) {
+      case 'mounts':
+        this.filterMounts();
+        break;
+      case 'pets':
+        this.filterPets();
+        break;
+      case 'toys':
+        this.filterToys();
+        break;
     }
   }
 
@@ -204,10 +240,16 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   }
 
   onSearchChange(): void {
-    if (this.activeTab === 'mounts') {
-      this.filterMounts();
-    } else {
-      this.filterPets();
+    switch (this.activeTab) {
+      case 'mounts':
+        this.filterMounts();
+        break;
+      case 'pets':
+        this.filterPets();
+        break;
+      case 'toys':
+        this.filterToys();
+        break;
     }
   }
 
@@ -367,8 +409,136 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   }
 
   get totalItems(): number {
-    return this.activeTab === 'mounts'
-      ? this.filteredMounts.length
-      : this.filteredPets.length;
+    switch (this.activeTab) {
+      case 'mounts':
+        return this.filteredMounts.length;
+      case 'pets':
+        return this.filteredPets.length;
+      case 'toys':
+        return this.filteredToys.length;
+      default:
+        return 0;
+    }
+  }
+
+  loadToys(): void {
+    console.log('Starting to load toys data...');
+    this.isLoading = true;
+    const characterInfo = this.characterService.getCharacterInfo();
+
+    if (!characterInfo) {
+      console.error('Character information not available');
+      this.isLoading = false;
+      return;
+    }
+
+    const { realmSlug, characterName } = characterInfo;
+
+    forkJoin({
+      allToys: this.collectionsService.getAllToysWithDetails(),
+      collectedToys: this.collectionsService.getCollectedToys(realmSlug, characterName)
+    })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: ({ allToys, collectedToys }) => {
+          // Extract collected toy IDs
+          const collectedToyIds = collectedToys?.toys?.map(
+            (toy: any) => toy?.toy?.id
+          ) || [];
+
+          console.log('Collected toys count:', collectedToyIds.length);
+
+          // Map the toys with the correct data structure
+          this.toys = allToys
+            .filter(toy => toy?.data && toy.data.id && toy.data.item?.name)
+            .map((toy) => ({
+              id: toy.data.id,
+              name: toy.data.item.name,
+              item: {
+                id: toy.data.item.id,
+                key: toy.data.item.key
+              },
+              description: toy.data.source_description || '',
+              source: toy.data.source || { type: 'Unknown', name: 'Unknown' },
+              is_alliance_only: false,
+              is_horde_only: false,
+              media: {
+                assets: toy.data.media?.assets || []
+              },
+              isCollected: collectedToyIds.includes(toy.data.id),
+              displayMedia: toy.data.media?.assets?.[0]?.value || ''
+            }));
+
+          console.log('Processed toys summary:', {
+            total: this.toys.length,
+            collected: this.toys.filter(t => t.isCollected).length,
+            notCollected: this.toys.filter(t => !t.isCollected).length,
+            firstToy: this.toys[0]
+          });
+
+          this.filterToys();
+        },
+        error: (error) => {
+          console.error('Error loading toys:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  filterToys(): void {
+    console.log('Filtering toys:', {
+      totalToys: this.toys.length,
+      searchQuery: this.searchQuery,
+      selectedFilter: this.selectedFilter
+    });
+
+    this.filteredToys = this.toys.filter((toy) => {
+      const nameMatch = toy.name
+        .toLowerCase()
+        .includes((this.searchQuery || '').toLowerCase());
+
+      switch (this.selectedFilter) {
+        case 'COLLECTED':
+          return nameMatch && toy.isCollected;
+        case 'NOT COLLECTED':
+          return nameMatch && !toy.isCollected;
+        default:
+          return nameMatch;
+      }
+    });
+
+    console.log('Filtering results:', {
+      totalFiltered: this.filteredToys.length,
+      collected: this.filteredToys.filter(t => t.isCollected).length,
+      notCollected: this.filteredToys.filter(t => !t.isCollected).length
+    });
+
+    this.currentPage = 1;
+  }
+
+  get paginatedToys(): Toy[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const paginatedItems = this.filteredToys.slice(
+      startIndex,
+      startIndex + this.itemsPerPage
+    );
+    console.log('Paginated toys:', {
+      total: this.filteredToys.length,
+      currentPage: this.currentPage,
+      itemsPerPage: this.itemsPerPage,
+      paginatedCount: paginatedItems.length,
+      items: paginatedItems,
+    });
+    return paginatedItems;
+  }
+
+  openWowheadLink(itemId: number): void {
+    const url = `https://www.wowhead.com/item=${itemId}`;
+    window.open(url, '_blank');
   }
 }

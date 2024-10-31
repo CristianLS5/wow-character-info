@@ -12,3 +12,20 @@
     object-fit: contain
     background-color: rgba(0, 0, 0, 0.2)
     aspect-ratio: 1/1
+
+.toy-card
+    width: 100%
+    aspect-ratio: 1/1
+    height: auto
+    transition: all 0.3s ease-in-out
+    &.not-collected
+        filter: grayscale(100%) brightness(70%)
+        opacity: 0.6
+        &:hover
+            filter: grayscale(50%) brightness(85%)
+            opacity: 0.8
+    
+.toy-icon
+    object-fit: contain
+    background-color: rgba(0, 0, 0, 0.2)
+    padding: 0.5rem
