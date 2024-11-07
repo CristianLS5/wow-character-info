@@ -6,7 +6,11 @@ import {
   CollectedPet,
   CreatureMediaResponse,
 } from '../interfaces/pet.interface';
-import { TransmogSet, CollectedTransmogsData } from '../interfaces/transmog.interface';
+import {
+  TransmogSet,
+  CollectedTransmogsData,
+} from '../interfaces/transmog.interface';
+import { HeirloomResponse } from '../interfaces/heirloom.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -156,9 +160,16 @@ export class CollectionsService {
     return this.http.get<TransmogSet[]>(`${this.apiUrl}/transmogs`);
   }
 
-  getCollectedTransmogs(realmSlug: string, characterName: string): Observable<CollectedTransmogsData> {
+  getCollectedTransmogs(
+    realmSlug: string,
+    characterName: string
+  ): Observable<CollectedTransmogsData> {
     return this.http.get<CollectedTransmogsData>(
       `${this.apiUrl}/collections/${realmSlug}/${characterName}/transmogs`
     );
+  }
+
+  getAllHeirlooms(): Observable<HeirloomResponse[]> {
+    return this.http.get<HeirloomResponse[]>(`${this.apiUrl}/heirlooms/all`);
   }
 }

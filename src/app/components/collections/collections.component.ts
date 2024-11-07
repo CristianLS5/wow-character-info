@@ -13,7 +13,8 @@ import {
 } from 'rxjs';
 import { CharacterService } from '../../services/character.service';
 import { PET_TYPES } from '../../interfaces/pet.interface';
-import { TransmogSet, CollectedTransmogsData } from '../../interfaces/transmog.interface';
+import { TransmogSet } from '../../interfaces/transmog.interface';
+import { Heirloom } from '../../interfaces/heirloom.interface';
 
 interface Asset {
   key: string;
@@ -148,13 +149,15 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   filterOptions = ['ALL', 'COLLECTED', 'NOT COLLECTED'];
   selectedFilter = 'ALL';
 
-  activeTab: 'mounts' | 'pets' | 'toys' | 'transmogs' = 'mounts';
+  activeTab: 'mounts' | 'pets' | 'toys' | 'transmogs' | 'heirlooms' = 'mounts';
   pets: Pet[] = [];
   filteredPets: Pet[] = [];
   toys: Toy[] = [];
   filteredToys: Toy[] = [];
   transmogSets: TransmogSet[] = [];
   filteredTransmogSets: TransmogSet[] = [];
+  heirlooms: Heirloom[] = [];
+  filteredHeirlooms: Heirloom[] = [];
 
   private destroy$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
@@ -174,7 +177,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  switchTab(tab: 'mounts' | 'pets' | 'toys' | 'transmogs'): void {
+  switchTab(tab: 'mounts' | 'pets' | 'toys' | 'transmogs' | 'heirlooms'): void {
     this.activeTab = tab;
     this.searchQuery = '';
     switch (tab) {
@@ -189,6 +192,9 @@ export class CollectionsComponent implements OnInit, OnDestroy {
       case 'toys':
         if (this.toys.length === 0) this.loadToys();
         else this.filterToys();
+        break;
+      case 'heirlooms':
+        if (this.heirlooms.length === 0) this.loadHeirlooms();
         break;
       default:
         this.filterMounts();
@@ -449,6 +455,8 @@ export class CollectionsComponent implements OnInit, OnDestroy {
         return this.filteredToys.length;
       case 'transmogs':
         return this.filteredTransmogSets.length;
+      case 'heirlooms':
+        return this.filteredHeirlooms.length;
       default:
         return 0;
     }
@@ -671,6 +679,30 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     );
   }
 
+  loadHeirlooms(): void {
+    this.isLoading = true;
+    this.collectionsService.getAllHeirlooms()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: (heirlooms) => {
+          this.heirlooms = heirlooms.map(heirloom => ({
+            ...heirloom.data,
+            displayMedia: heirloom.data.media?.assets?.find(asset => asset.key === 'icon')?.value || ''
+          }));
+          this.filteredHeirlooms = this.heirlooms;
+        },
+        error: (error) => {
+          console.error('Error loading heirlooms:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
   openMountWowheadLink(mount: Mount): void {
     if (!mount.itemId && !mount.spellId) {
       return; // Not clickable if neither exists
@@ -705,5 +737,18 @@ export class CollectionsComponent implements OnInit, OnDestroy {
 
   getWowheadUrl(itemId: number): string {
     return `https://www.wowhead.com/item=${itemId}`;
+  }
+
+  openHeirloomWowheadLink(itemId: number): void {
+    const url = `https://www.wowhead.com/item=${itemId}`;
+    window.open(url, '_blank');
+  }
+
+  get paginatedHeirlooms(): Heirloom[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredHeirlooms.slice(
+      startIndex,
+      startIndex + this.itemsPerPage
+    );
   }
 }
