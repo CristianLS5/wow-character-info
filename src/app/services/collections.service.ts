@@ -10,7 +10,7 @@ import {
   TransmogSet,
   CollectedTransmogsData,
 } from '../interfaces/transmog.interface';
-import { HeirloomResponse } from '../interfaces/heirloom.interface';
+import { HeirloomResponse, CollectedHeirloomsResponse } from '../interfaces/heirloom.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -102,11 +102,11 @@ export class CollectionsService {
           const pets = response.pets || [];
           return pets;
         }),
-        switchMap((pets) => {
+        switchMap((pets: CollectedPet[]) => {
           if (!pets.length) return of([]);
 
           const batchSize = 5;
-          const batches = [];
+          const batches: CollectedPet[][] = [];
 
           // Process all pets since backend handles invalid IDs
           for (let i = 0; i < pets.length; i += batchSize) {
@@ -115,20 +115,18 @@ export class CollectionsService {
           }
 
           return from(batches).pipe(
-            concatMap((batch) => {
-              const batchObservables = batch.map((pet) => {
+            concatMap((batch: CollectedPet[]) => {
+              const batchObservables: Observable<CollectedPet>[] = batch.map((pet) => {
                 if (pet.creature_display?.id) {
                   return this.getCreatureMedia(pet.creature_display.id).pipe(
                     map((mediaResponse) => ({
                       ...pet,
-                      // Only set creatureMedia if assets exist and have values
                       creatureMedia:
                         mediaResponse?.assets?.length > 0
                           ? mediaResponse.assets[0].value
                           : undefined,
                     })),
                     catchError(() => {
-                      // Return pet without media if request fails
                       return of(pet);
                     })
                   );
@@ -166,6 +164,15 @@ export class CollectionsService {
   ): Observable<CollectedTransmogsData> {
     return this.http.get<CollectedTransmogsData>(
       `${this.apiUrl}/collections/${realmSlug}/${characterName}/transmogs`
+    );
+  }
+
+  getCollectedHeirlooms(
+    realmSlug: string,
+    characterName: string
+  ): Observable<CollectedHeirloomsResponse> {
+    return this.http.get<CollectedHeirloomsResponse>(
+      `${this.apiUrl}/collections/${realmSlug}/${characterName}/heirlooms`
     );
   }
 

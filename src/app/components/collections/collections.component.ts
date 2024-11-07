@@ -162,6 +162,8 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
 
+  filterStatus: 'ALL' | 'COLLECTED' | 'NOT_COLLECTED' = 'ALL';
+
   constructor(
     private collectionsService: CollectionsService,
     private characterService: CharacterService
@@ -252,6 +254,9 @@ export class CollectionsComponent implements OnInit, OnDestroy {
       case 'transmogs':
         this.filterTransmogs();
         break;
+      case 'heirlooms':
+        this.filterHeirlooms();
+        break;
     }
   }
 
@@ -273,7 +278,6 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   }
 
   onSearchChange(): void {
-    console.log('Search changed:', this.searchQuery);
     switch (this.activeTab) {
       case 'mounts':
         this.filterMounts();
@@ -286,6 +290,9 @@ export class CollectionsComponent implements OnInit, OnDestroy {
         break;
       case 'transmogs':
         this.filterTransmogs();
+        break;
+      case 'heirlooms':
+        this.filterHeirlooms();
         break;
     }
   }
@@ -681,26 +688,111 @@ export class CollectionsComponent implements OnInit, OnDestroy {
 
   loadHeirlooms(): void {
     this.isLoading = true;
-    this.collectionsService.getAllHeirlooms()
-      .pipe(
+    
+    const characterInfo = this.characterService.getCharacterInfo();
+    
+    if (characterInfo) {
+      const { realmSlug, characterName } = characterInfo;
+      
+      forkJoin({
+        allHeirlooms: this.collectionsService.getAllHeirlooms(),
+        collectedHeirlooms: this.collectionsService.getCollectedHeirlooms(
+          realmSlug,
+          characterName.toLowerCase()
+        )
+      }).pipe(
         takeUntil(this.destroy$),
         finalize(() => {
           this.isLoading = false;
         })
-      )
-      .subscribe({
-        next: (heirlooms) => {
-          this.heirlooms = heirlooms.map(heirloom => ({
-            ...heirloom.data,
-            displayMedia: heirloom.data.media?.assets?.find(asset => asset.key === 'icon')?.value || ''
+      ).subscribe({
+        next: ({ allHeirlooms, collectedHeirlooms }) => {
+          console.log('Raw heirloom data:', {
+            allHeirloomsCount: allHeirlooms.length,
+            collectedCount: collectedHeirlooms.heirlooms?.length || 0,
+            sampleCollected: collectedHeirlooms.heirlooms?.slice(0, 2)
+          });
+
+          const collectedIds = new Set(
+            collectedHeirlooms.heirlooms.map(h => h.heirloom.id)
+          );
+
+          this.heirlooms = allHeirlooms.map(heirloomResponse => ({
+            ...heirloomResponse.data,
+            displayMedia: heirloomResponse.data.media?.assets?.find(asset => asset.key === 'icon')?.value || '',
+            isCollected: collectedIds.has(heirloomResponse.data.id)
           }));
-          this.filteredHeirlooms = this.heirlooms;
+          
+          console.log('Processed heirlooms:', {
+            total: this.heirlooms.length,
+            collected: this.heirlooms.filter(h => h.isCollected).length,
+            notCollected: this.heirlooms.filter(h => !h.isCollected).length,
+            sampleProcessed: this.heirlooms.slice(0, 2),
+            collectedIdsArray: Array.from(collectedIds).slice(0, 5)
+          });
+          
+          this.filterHeirlooms();
         },
         error: (error) => {
           console.error('Error loading heirlooms:', error);
           this.isLoading = false;
         }
       });
+    } else {
+      // Load all heirlooms without collection status
+      this.collectionsService.getAllHeirlooms()
+        .pipe(
+          takeUntil(this.destroy$),
+          finalize(() => {
+            this.isLoading = false;
+          })
+        )
+        .subscribe({
+          next: (heirlooms) => {
+            this.heirlooms = heirlooms.map(heirloomResponse => ({
+              ...heirloomResponse.data,
+              displayMedia: heirloomResponse.data.media?.assets?.find(asset => asset.key === 'icon')?.value || '',
+              isCollected: false
+            }));
+            this.filterHeirlooms();
+          },
+          error: (error) => {
+            console.error('Error loading heirlooms:', error);
+            this.isLoading = false;
+          }
+        });
+    }
+  }
+
+  filterHeirlooms(): void {
+    console.log('Filtering heirlooms:', {
+      totalHeirlooms: this.heirlooms.length,
+      searchQuery: this.searchQuery,
+      selectedFilter: this.selectedFilter
+    });
+
+    this.filteredHeirlooms = this.heirlooms.filter((heirloom) => {
+      const nameMatch = heirloom.item.name
+        .toLowerCase()
+        .includes((this.searchQuery || '').toLowerCase());
+
+      switch (this.selectedFilter) {
+        case 'COLLECTED':
+          return nameMatch && heirloom.isCollected;
+        case 'NOT COLLECTED':
+          return nameMatch && !heirloom.isCollected;
+        default:
+          return nameMatch;
+      }
+    });
+
+    console.log('Filter results:', {
+      totalFiltered: this.filteredHeirlooms.length,
+      collected: this.filteredHeirlooms.filter(h => h.isCollected).length,
+      notCollected: this.filteredHeirlooms.filter(h => !h.isCollected).length
+    });
+
+    this.currentPage = 1;
   }
 
   openMountWowheadLink(mount: Mount): void {

@@ -8,6 +8,15 @@ export interface HeirloomResponse {
   __v: number;
 }
 
+export interface CollectedHeirloomsResponse {
+  heirlooms: Array<{
+    heirloom: {
+      id: number;
+      name: string;
+    };
+  }>;
+}
+
 export interface Heirloom {
   id: number;
   name: string;
@@ -28,4 +37,5 @@ export interface Heirloom {
   };
   upgrades: Array<any>;
   displayMedia?: string;
+  isCollected?: boolean;
 } 
