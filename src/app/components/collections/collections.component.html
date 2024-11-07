@@ -51,6 +51,23 @@
                              : 'bg-white'
                      ]"></div>
             </button>
+            <!-- Add transmog tab button -->
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'transmogs'
+                        ? 'text-[#4287f5] font-bold'
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('transmogs')">
+                <span>Transmogs</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'transmogs'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
         </div>
 
         <!-- Search, Filter, and Pagination Section -->
@@ -119,14 +136,23 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
                 @for (mount of paginatedMounts; track mount.id; let i = $index) {
                 <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
-                    [class.not-collected]="!mount.isCollected" [style.animation-delay]="i * 0.1 + 's'"
-                    (click)="openMountWowheadLink(mount.id)">
+                    [class.not-collected]="!mount.isCollected"
+                    [class.cursor-pointer]="mount.itemId || mount.spellId"
+                    [class.cursor-default]="!mount.itemId && !mount.spellId"
+                    [class.hover:brightness-110]="mount.itemId || mount.spellId"
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openMountWowheadLink(mount)">
                     <div class="relative h-full">
                         @if (mount.creatureMedia) {
                         <img [src]="mount.creatureMedia" [alt]="mount.name" class="w-full h-full object-cover">
                         }
                         <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
-                            <h3 class="text-sm font-semibold truncate">{{ mount.name }}</h3>
+                            <h3 class="text-sm font-semibold truncate">
+                                {{ mount.name }}
+                                @if (mount.itemId || mount.spellId) {
+                                    <span class="icon-[mdi--link-variant] ml-1 text-xs opacity-75"></span>
+                                }
+                            </h3>
                         </div>
                         <div
                             class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
@@ -215,7 +241,7 @@
                         <div class="absolute inset-0 bg-black bg-opacity-90 text-white p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
                             <h3 class="text-sm font-semibold mb-1">{{ toy.name }}</h3>
                             <p class="text-xs mb-1"><strong>Source:</strong> {{ toy.source.name }}</p>
-                            <p class="text-xs mb-1"><strong>Description:</strong> {{ toy.description }}</p>
+                            <p class="text-xs mb-1"><strong>Source Description:</strong> {{ toy.description }}</p>
                             @if (toy.is_alliance_only || toy.is_horde_only) {
                             <p class="text-xs mb-1" [ngClass]="{
                                 'text-blue-400': toy.is_alliance_only,
@@ -227,6 +253,35 @@
                             <p class="text-xs">
                                 <strong>Status:</strong> {{ toy.isCollected ? 'Collected' : 'Not Collected' }}
                             </p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else if (activeTab === 'transmogs') {
+            <!-- Transmogs grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                @for (set of paginatedTransmogs; track set.setId; let i = $index) {
+                <div class="transmog-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                    [class.not-collected]="!set.isCollected"
+                    [style.animation-delay]="i * 0.1 + 's'">
+                    <div class="relative p-4">
+                        <!-- Set Name -->
+                        <h3 class="text-lg font-semibold mb-4 text-center truncate">{{ set.name }}</h3>
+
+                        <!-- Grid of appearances -->
+                        <div class="grid grid-cols-1 gap-2">
+                            @for (appearance of set.appearances; track appearance.id) {
+                            <a [href]="getWowheadUrl(appearance.item.id)" 
+                               class="flex items-center gap-2 p-2 hover:bg-custom-bg rounded-md transition-all duration-300 cursor-pointer"
+                               target="_blank" 
+                               rel="noopener noreferrer">
+                                <img [src]="appearance.icon" 
+                                     [alt]="appearance.item.name"
+                                     class="w-10 h-10 rounded-md">
+                                <span class="text-sm font-semibold">{{ appearance.item.name }}</span>
+                            </a>
+                            }
                         </div>
                     </div>
                 </div>

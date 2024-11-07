@@ -13,6 +13,7 @@ import {
 } from 'rxjs';
 import { CharacterService } from '../../services/character.service';
 import { PET_TYPES } from '../../interfaces/pet.interface';
+import { TransmogSet, CollectedTransmogsData } from '../../interfaces/transmog.interface';
 
 interface Asset {
   key: string;
@@ -54,6 +55,8 @@ interface Mount {
   };
   creatureMedia?: string;
   isCollected?: boolean;
+  itemId?: number;
+  spellId?: number;
 }
 
 interface Pet {
@@ -145,11 +148,13 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   filterOptions = ['ALL', 'COLLECTED', 'NOT COLLECTED'];
   selectedFilter = 'ALL';
 
-  activeTab: 'mounts' | 'pets' | 'toys' = 'mounts';
+  activeTab: 'mounts' | 'pets' | 'toys' | 'transmogs' = 'mounts';
   pets: Pet[] = [];
   filteredPets: Pet[] = [];
   toys: Toy[] = [];
   filteredToys: Toy[] = [];
+  transmogSets: TransmogSet[] = [];
+  filteredTransmogSets: TransmogSet[] = [];
 
   private destroy$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
@@ -169,10 +174,14 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  switchTab(tab: 'mounts' | 'pets' | 'toys'): void {
+  switchTab(tab: 'mounts' | 'pets' | 'toys' | 'transmogs'): void {
     this.activeTab = tab;
     this.searchQuery = '';
     switch (tab) {
+      case 'transmogs':
+        if (this.transmogSets.length === 0) this.loadTransmogs();
+        else this.filterTransmogs();
+        break;
       case 'pets':
         if (this.pets.length === 0) this.loadPets();
         else this.filterPets();
@@ -234,6 +243,9 @@ export class CollectionsComponent implements OnInit, OnDestroy {
       case 'toys':
         this.filterToys();
         break;
+      case 'transmogs':
+        this.filterTransmogs();
+        break;
     }
   }
 
@@ -255,6 +267,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   }
 
   onSearchChange(): void {
+    console.log('Search changed:', this.searchQuery);
     switch (this.activeTab) {
       case 'mounts':
         this.filterMounts();
@@ -264,6 +277,9 @@ export class CollectionsComponent implements OnInit, OnDestroy {
         break;
       case 'toys':
         this.filterToys();
+        break;
+      case 'transmogs':
+        this.filterTransmogs();
         break;
     }
   }
@@ -431,6 +447,8 @@ export class CollectionsComponent implements OnInit, OnDestroy {
         return this.filteredPets.length;
       case 'toys':
         return this.filteredToys.length;
+      case 'transmogs':
+        return this.filteredTransmogSets.length;
       default:
         return 0;
     }
@@ -554,8 +572,114 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     return paginatedItems;
   }
 
-  openMountWowheadLink(mountId: number): void {
-    const url = `https://www.wowhead.com/mount=${mountId}`;
+  loadTransmogs(): void {
+    this.isLoading = true;
+    const characterInfo = this.characterService.getCharacterInfo();
+
+    if (!characterInfo) {
+      console.error('Character information not available');
+      this.isLoading = false;
+      return;
+    }
+
+    const { realmSlug, characterName } = characterInfo;
+
+    forkJoin({
+      allTransmogs: this.collectionsService.getAllTransmogSets(),
+      collectedTransmogs: this.collectionsService.getCollectedTransmogs(realmSlug, characterName)
+    }).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.isLoading = false;
+      })
+    ).subscribe({
+      next: ({ allTransmogs, collectedTransmogs }) => {
+        console.log('Raw data:', {
+          allTransmogsCount: allTransmogs.length,
+          collectedSetsCount: collectedTransmogs.appearance_sets?.length || 0,
+          sampleAllTransmogs: allTransmogs.slice(0, 2),
+          sampleCollected: collectedTransmogs.appearance_sets?.slice(0, 2)
+        });
+
+        // Create Set of collected transmog IDs
+        const collectedSetIds = new Set(
+          collectedTransmogs.appearance_sets?.map(set => set.id) || []
+        );
+
+        // Mark sets as collected based on the IDs
+        this.transmogSets = allTransmogs.map(set => ({
+          ...set,
+          isCollected: collectedSetIds.has(set.setId)
+        }));
+
+        console.log('Processed transmog sets:', {
+          total: this.transmogSets.length,
+          collected: this.transmogSets.filter(s => s.isCollected).length,
+          notCollected: this.transmogSets.filter(s => !s.isCollected).length,
+          sampleCollected: this.transmogSets.filter(s => s.isCollected).slice(0, 2)
+        });
+
+        this.filterTransmogs();
+      },
+      error: (error) => {
+        console.error('Error loading transmogs:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  filterTransmogs(): void {
+    console.log('Filtering transmogs:', {
+      totalSets: this.transmogSets.length,
+      searchQuery: this.searchQuery,
+      selectedFilter: this.selectedFilter
+    });
+
+    this.filteredTransmogSets = this.transmogSets.filter((set) => {
+      // Handle null/undefined name
+      const setName = set.name || '';
+      const searchTerm = this.searchQuery || '';
+      
+      const nameMatch = setName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+      switch (this.selectedFilter) {
+        case 'COLLECTED':
+          return nameMatch && set.isCollected;
+        case 'NOT COLLECTED':
+          return nameMatch && !set.isCollected;
+        default:
+          return nameMatch;
+      }
+    });
+
+    console.log('Filter results:', {
+      totalFiltered: this.filteredTransmogSets.length,
+      collected: this.filteredTransmogSets.filter(s => s.isCollected).length,
+      notCollected: this.filteredTransmogSets.filter(s => !s.isCollected).length
+    });
+
+    this.currentPage = 1;
+  }
+
+  get paginatedTransmogs(): TransmogSet[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredTransmogSets.slice(
+      startIndex,
+      startIndex + this.itemsPerPage
+    );
+  }
+
+  openMountWowheadLink(mount: Mount): void {
+    if (!mount.itemId && !mount.spellId) {
+      return; // Not clickable if neither exists
+    }
+
+    const url = mount.itemId
+      ? `https://www.wowhead.com/item=${mount.itemId}`
+      : `https://www.wowhead.com/spell=${mount.spellId}`;
+
     window.open(url, '_blank');
   }
 
@@ -569,5 +693,17 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   openToyWowheadLink(itemId: number): void {
     const url = `https://www.wowhead.com/item=${itemId}`;
     window.open(url, '_blank');
+  }
+
+  openTransmogWowheadLink(itemId: number | undefined): void {
+    if (!itemId) {
+      return;
+    }
+    const url = `https://www.wowhead.com/item=${itemId}`;
+    window.open(url, '_blank');
+  }
+
+  getWowheadUrl(itemId: number): string {
+    return `https://www.wowhead.com/item=${itemId}`;
   }
 }

@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, forkJoin, from } from 'rxjs';
 import { map, switchMap, concatMap, scan, catchError } from 'rxjs/operators';
-import { CollectedPet, CreatureMediaResponse } from '../interfaces/pet.interface';
+import {
+  CollectedPet,
+  CreatureMediaResponse,
+} from '../interfaces/pet.interface';
+import { TransmogSet, CollectedTransmogsData } from '../interfaces/transmog.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -19,9 +23,15 @@ export class CollectionsService {
 
   getAllMountsWithDetails(): Observable<any[]> {
     console.log('Fetching all mounts with details');
-    return this.http
-      .get<any[]>(`${this.apiUrl}/mounts/all`)
-      .pipe(map((mounts) => mounts.map((mount) => mount.data)));
+    return this.http.get<any[]>(`${this.apiUrl}/mounts/all`).pipe(
+      map((mounts) =>
+        mounts.map((mount) => ({
+          ...mount.data,
+          itemId: mount.itemId,
+          spellId: mount.spellId,
+        }))
+      )
+    );
   }
 
   searchMounts(name: string): Observable<any[]> {
@@ -134,11 +144,21 @@ export class CollectionsService {
     console.log('Fetching all toys with details');
     return this.http.get<any[]>(`${this.apiUrl}/toys/all`);
   }
-  
+
   getCollectedToys(realmSlug: string, characterName: string): Observable<any> {
     console.log(`Fetching collected toys for ${characterName} on ${realmSlug}`);
     return this.http.get<any>(
       `${this.apiUrl}/collections/${realmSlug}/${characterName}/toys`
+    );
+  }
+
+  getAllTransmogSets(): Observable<TransmogSet[]> {
+    return this.http.get<TransmogSet[]>(`${this.apiUrl}/transmogs`);
+  }
+
+  getCollectedTransmogs(realmSlug: string, characterName: string): Observable<CollectedTransmogsData> {
+    return this.http.get<CollectedTransmogsData>(
+      `${this.apiUrl}/collections/${realmSlug}/${characterName}/transmogs`
     );
   }
 }
