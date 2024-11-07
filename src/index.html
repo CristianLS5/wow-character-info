@@ -6,8 +6,30 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <script>const whTooltips = { colorLinks: true, iconizeLinks: true, renameLinks: true };</script>
-    <script src="https://wow.zamimg.com/widgets/power.js"></script>
+  <script>
+    const whTooltips = {
+      colorLinks: true,
+      iconizeLinks: true,
+      renameLinks: true,
+      iconSize: 'small',
+      hide: { 
+        maxStack: true,
+        sellPrice: true,
+        ilvl: false,
+        dropchance: true 
+      }
+    };
+  </script>
+  <script src="https://wow.zamimg.com/widgets/power.js"></script>
+  <script>
+    $WowheadPower.refreshTips = function() {
+      // Only refresh if there are new elements
+      if (this.newElements.length > 0) {
+        this.applyTips();
+        this.newElements = [];
+      }
+    };
+  </script>
 </head>
 <body>
   <app-root></app-root>
