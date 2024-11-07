@@ -15,19 +15,10 @@
       </a>
       @if (hasTransmog()) {
         <div class="absolute top-0 mt-1" [ngClass]="isRightColumn ? 'right-0 mr-1' : 'left-0 ml-1'">
-          <div class="relative group">
-            <a [href]="getTransmogWowheadUrl()" target="_blank" rel="noopener noreferrer">
-              <span class="icon-[tabler--join-straight] w-6 h-6 text-[#c82bb7] fill-icon transition-all duration-300 ease-in-out group-hover:text-custom-highlight" 
-                    [ngClass]="[getTransmogIconRotation(), getTransmogIconAnimation()]"></span>
-            </a>
-            <div class="hidden group-hover:block absolute top-full mt-1 bg-custom-card-bg bg-opacity-90 p-2 rounded z-20 text-xs text-custom-text whitespace-nowrap"
-                 [ngClass]="isRightColumn ? 'right-0' : 'left-0'">
-              <div class="flex items-center" [ngClass]="isRightColumn ? 'flex-row-reverse' : ''">
-                <span class="mx-2">Transmog to: {{ item.transmog.item.name }}</span>
-                <img [src]="item.transmog.iconUrl" [alt]="item.transmog.item.name" class="w-6 h-6 rounded">
-              </div>
-            </div>
-          </div>
+          <a [href]="getTransmogWowheadUrl()" target="_blank" rel="noopener noreferrer" class="group">
+            <span class="icon-[tabler--join-straight] w-6 h-6 text-[#c82bb7] fill-icon transition-all duration-300 ease-in-out group-hover:text-custom-highlight" 
+                  [ngClass]="[getTransmogIconRotation(), getTransmogIconAnimation()]"></span>
+          </a>
         </div>
       }
     </div>
