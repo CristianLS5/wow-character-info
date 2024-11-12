@@ -4,6 +4,7 @@ import { CharacterComponent } from './components/character/character.component';
 import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
 import { CollectionsComponent } from './components/collections/collections.component';
 import { AuthGuard } from './utils/auth/auth.guard';
+import { AchievementsComponent } from './components/achievements/achievements.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -18,4 +19,8 @@ export const routes: Routes = [
     component: CollectionsComponent,
     canActivate: [AuthGuard],
   },
+  {
+    path: 'achievements',
+    component: AchievementsComponent
+  }
 ];

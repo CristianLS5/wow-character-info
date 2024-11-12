@@ -1,0 +1,76 @@
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+  <div class="p-4 overflow-y-auto h-full">
+    <!-- Main Achievement Circles -->
+    <div class="bg-custom-card-bg rounded-lg shadow-lg p-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (!achievementStats()) {
+          <!-- Loading skeletons for main categories -->
+          @for (i of [1,2,3]; track i) {
+            <div class="flex flex-col items-center">
+              <div class="skeleton w-48 h-48 rounded-full"></div>
+            </div>
+          }
+        } @else {
+          <!-- Legacy -->
+          <div class="flex flex-col items-center">
+            <h3 class="text-lg font-bold text-custom-text mb-4">Legacy</h3>
+            <div id="legacy-achievement-arc" class="relative w-48 h-48">
+              <div class="absolute inset-0 flex items-center justify-center flex-col">
+                <span class="text-3xl font-bold text-custom-text">{{ achievementStats()?.legacy?.completed }}/{{ achievementStats()?.legacy?.total }}</span>
+                <span class="text-sm text-custom-text">({{ achievementStats()?.legacy?.percentage | number:'1.0-0' }}%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overall -->
+          <div class="flex flex-col items-center">
+            <h3 class="text-lg font-bold text-custom-text mb-4">Overall</h3>
+            <div id="main-achievement-arc" class="relative w-48 h-48">
+              <div class="absolute inset-0 flex items-center justify-center flex-col">
+                <span class="text-3xl font-bold text-custom-text">{{ achievementStats()?.overall?.completed }}/{{ achievementStats()?.overall?.total }}</span>
+                <span class="text-sm text-custom-text">({{ achievementStats()?.overall?.percentage | number:'1.0-0' }}%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feats of Strength -->
+          <div class="flex flex-col items-center">
+            <h3 class="text-lg font-bold text-custom-text mb-4">Feats of Strength</h3>
+            <div id="feats-achievement-arc" class="relative w-48 h-48">
+              <div class="absolute inset-0 flex items-center justify-center flex-col">
+                <span class="text-3xl font-bold text-custom-text">{{ achievementStats()?.feats?.completed }}/{{ achievementStats()?.feats?.total }}</span>
+                <span class="text-sm text-custom-text">({{ achievementStats()?.feats?.percentage | number:'1.0-0' }}%)</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Parent Categories with Arc Tweens -->
+    <div class="bg-custom-card-bg rounded-lg shadow-lg p-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @if (!parentCategories().length) {
+          <!-- Loading skeletons -->
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="flex flex-col items-center">
+              <div class="skeleton w-32 h-32 rounded-full"></div>
+            </div>
+          }
+        } @else {
+          @for (category of parentCategories(); track category.name) {
+            <div class="flex flex-col items-center bg-custom-bg p-4 rounded-lg">
+              <h4 class="text-sm font-semibold text-custom-text mb-2">{{ category.name }}</h4>
+              <div [id]="'category-arc-' + category.elementId" class="relative w-32 h-32">
+                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                  <span class="text-lg font-bold text-custom-text">{{ category.completed }}/{{ category.total }}</span>
+                  <span class="text-xs text-custom-text">({{ category.percentage | number:'1.0-0' }}%)</span>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>
