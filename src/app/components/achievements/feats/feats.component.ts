@@ -21,13 +21,20 @@ export class FeatsComponent implements OnInit {
   protected achievements = signal<Achievement[]>([]);
   protected completedAchievements = signal<Map<number, boolean>>(new Map());
 
+  private getCategoryName(achievement: Achievement): string {
+    return (
+      achievement.data.category.parent_category?.name ||
+      achievement.data.category.name
+    );
+  }
+
   // Category view data
   protected categoryData: CategoryViewData = {
     title: 'Feats of Strength',
     achievements: this.achievements,
     completedAchievements: this.completedAchievements,
     filterPredicate: (achievement: Achievement) =>
-      achievement.data.category.name === 'Feats of Strength',
+      this.getCategoryName(achievement) === 'Feats of Strength'
   };
 
   ngOnInit() {
@@ -40,7 +47,7 @@ export class FeatsComponent implements OnInit {
     const { realmSlug, characterName } = characterInfo;
 
     forkJoin({
-      allAchievements: this.achievementService.getFeatsAchievements(),
+      allAchievements: this.achievementService.getAllAchievements(),
       characterAchievements: this.achievementService.getCharacterAchievements(
         realmSlug,
         characterName.toLowerCase()
@@ -48,8 +55,13 @@ export class FeatsComponent implements OnInit {
     })
       .pipe(
         map(({ allAchievements, characterAchievements }) => {
+          // Filter achievements here instead of in service
+          const featsAchievements = allAchievements.filter(
+            achievement => this.getCategoryName(achievement) === 'Feats of Strength'
+          );
+          
           // Update achievements signal
-          this.achievements.set(allAchievements);
+          this.achievements.set(featsAchievements);
 
           // Create and update completedAchievements map
           const completedMap = new Map<number, boolean>();
@@ -63,7 +75,7 @@ export class FeatsComponent implements OnInit {
           });
           this.completedAchievements.set(completedMap);
 
-          return allAchievements;
+          return featsAchievements;
         })
       )
       .subscribe();
