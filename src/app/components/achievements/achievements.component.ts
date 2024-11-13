@@ -5,6 +5,7 @@ import { CharacterService } from '../../services/character.service';
 import * as d3 from 'd3';
 import { Achievement } from '../../interfaces/achievement.interface';
 import { forkJoin } from 'rxjs';
+import { Router } from '@angular/router';
 
 interface CategoryStats {
   completed: number;
@@ -37,6 +38,7 @@ interface ArcData {
 export class AchievementsComponent implements OnInit {
   private achievementService = inject(AchievementService);
   private characterService = inject(CharacterService);
+  private router = inject(Router);
   achievementStats = signal<{
     overall: CategoryStats;
     legacy: CategoryStats;
@@ -69,16 +71,16 @@ export class AchievementsComponent implements OnInit {
           allAchievementsCount: allAchievements.length,
           characterAchievementsCount: characterAchievements.achievements.length,
           completedAchievements: characterAchievements.achievements.filter(
-            (a) => a?.criteria?.is_completed
+            (a) => a?.completed_timestamp != null
           ).length,
         });
 
         const completedAchievementsMap = new Map();
         characterAchievements.achievements.forEach((charAchievement) => {
-          if (charAchievement && charAchievement.criteria) {
+          if (charAchievement) {
             completedAchievementsMap.set(
               charAchievement.achievement.id,
-              charAchievement.criteria.is_completed
+              charAchievement.completed_timestamp != null
             );
           }
         });
@@ -405,5 +407,9 @@ export class AchievementsComponent implements OnInit {
     stats.feats.percentage = (stats.feats.completed / stats.feats.total) * 100;
 
     return stats;
+  }
+
+  navigateTo(category: string) {
+    this.router.navigate([`/achievements/${category}`]);
   }
 }

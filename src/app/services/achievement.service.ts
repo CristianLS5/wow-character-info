@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError } from 'rxjs';
+import { Observable, tap, catchError, map } from 'rxjs';
 import {
   Achievement
 } from '../interfaces/achievement.interface';
@@ -83,6 +83,24 @@ export class AchievementService {
       catchError(error => {
         console.error('Error in getCharacterAchievements:', error);
         throw error;
+      })
+    );
+  }
+
+  getLegacyAchievements(): Observable<Achievement[]> {
+    return this.getAllAchievements().pipe(
+      map(achievements => 
+        achievements.filter(achievement => 
+          achievement.data.category.parent_category?.name === 'Legacy' ||
+          achievement.data.category.name === 'Legacy'
+        )
+      ),
+      tap(achievements => {
+        console.log('Legacy achievements:', {
+          total: achievements.length,
+          categories: [...new Set(achievements.map(a => a.data.category.name))],
+          sample: achievements.slice(0, 2)
+        });
       })
     );
   }

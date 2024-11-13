@@ -4,15 +4,16 @@
     <div class="bg-custom-card-bg rounded-lg shadow-lg p-6 mb-6">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @if (!achievementStats()) {
-          <!-- Loading skeletons for main categories -->
+          <!-- Loading skeletons for main circles -->
           @for (i of [1,2,3]; track i) {
             <div class="flex flex-col items-center">
+              <h3 class="text-lg font-bold text-custom-text mb-4 skeleton w-24 h-6"></h3>
               <div class="skeleton w-48 h-48 rounded-full"></div>
             </div>
           }
         } @else {
-          <!-- Legacy -->
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center cursor-pointer hover:bg-opacity-80 transition"
+               (click)="navigateTo('legacy')">
             <h3 class="text-lg font-bold text-custom-text mb-4">Legacy</h3>
             <div id="legacy-achievement-arc" class="relative w-48 h-48">
               <div class="absolute inset-0 flex items-center justify-center flex-col">
@@ -22,8 +23,8 @@
             </div>
           </div>
 
-          <!-- Overall -->
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center cursor-pointer hover:bg-opacity-80 transition"
+               (click)="navigateTo('overall')">
             <h3 class="text-lg font-bold text-custom-text mb-4">Overall</h3>
             <div id="main-achievement-arc" class="relative w-48 h-48">
               <div class="absolute inset-0 flex items-center justify-center flex-col">
@@ -33,8 +34,8 @@
             </div>
           </div>
 
-          <!-- Feats of Strength -->
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center cursor-pointer hover:bg-opacity-80 transition"
+               (click)="navigateTo('feats')">
             <h3 class="text-lg font-bold text-custom-text mb-4">Feats of Strength</h3>
             <div id="feats-achievement-arc" class="relative w-48 h-48">
               <div class="absolute inset-0 flex items-center justify-center flex-col">

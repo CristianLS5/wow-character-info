@@ -5,6 +5,7 @@ import { AuthCallbackComponent } from './components/auth-callback/auth-callback.
 import { CollectionsComponent } from './components/collections/collections.component';
 import { AuthGuard } from './utils/auth/auth.guard';
 import { AchievementsComponent } from './components/achievements/achievements.component';
+import { LegacyComponent } from './components/achievements/legacy/legacy.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -22,5 +23,9 @@ export const routes: Routes = [
   {
     path: 'achievements',
     component: AchievementsComponent
+  },
+  {
+    path: 'achievements/legacy',
+    component: LegacyComponent
   }
 ];
