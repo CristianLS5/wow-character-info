@@ -85,10 +85,10 @@ export class LegacyComponent implements OnInit {
         );
 
         characterAchievements.achievements.forEach(charAchievement => {
-          if (charAchievement && charAchievement.criteria) {
+          if (charAchievement) {
             this.completedAchievementsMap.set(
               charAchievement.achievement.id,
-              charAchievement.criteria.is_completed
+              charAchievement.completed_timestamp != null
             );
           }
         });
@@ -312,5 +312,16 @@ export class LegacyComponent implements OnInit {
     const chain = this.getAchievementChain(achievement);
     // Remove the latest achievement (last in the array)
     return chain.slice(0, -1);
+  }
+
+  getTotalLegacyProgress(): string {
+    const legacyAchievements = this.achievementsCache;
+    const legacyIds = new Set(legacyAchievements.map(a => a.data.id));
+    
+    const completed = Array.from(this.completedAchievementsMap.entries())
+      .filter(([id, isCompleted]) => legacyIds.has(id) && isCompleted)
+      .length;
+
+    return `${completed}/${legacyAchievements.length}`;
   }
 }

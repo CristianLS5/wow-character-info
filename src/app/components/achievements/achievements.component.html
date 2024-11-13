@@ -12,10 +12,10 @@
             </div>
           }
         } @else {
-          <div class="flex flex-col items-center cursor-pointer hover:bg-opacity-80 transition"
+          <div class="flex flex-col items-center cursor-pointer group hover:scale-105 transition-all duration-300"
                (click)="navigateTo('legacy')">
-            <h3 class="text-lg font-bold text-custom-text mb-4">Legacy</h3>
-            <div id="legacy-achievement-arc" class="relative w-48 h-48">
+            <h3 class="text-lg font-bold text-custom-text mb-4 group-hover:text-blue-500">Legacy</h3>
+            <div id="legacy-achievement-arc" class="relative w-48 h-48 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
               <div class="absolute inset-0 flex items-center justify-center flex-col">
                 <span class="text-3xl font-bold text-custom-text">{{ achievementStats()?.legacy?.completed }}/{{ achievementStats()?.legacy?.total }}</span>
                 <span class="text-sm text-custom-text">({{ achievementStats()?.legacy?.percentage | number:'1.0-0' }}%)</span>
@@ -23,8 +23,7 @@
             </div>
           </div>
 
-          <div class="flex flex-col items-center cursor-pointer hover:bg-opacity-80 transition"
-               (click)="navigateTo('overall')">
+          <div class="flex flex-col items-center">
             <h3 class="text-lg font-bold text-custom-text mb-4">Overall</h3>
             <div id="main-achievement-arc" class="relative w-48 h-48">
               <div class="absolute inset-0 flex items-center justify-center flex-col">
@@ -34,10 +33,10 @@
             </div>
           </div>
 
-          <div class="flex flex-col items-center cursor-pointer hover:bg-opacity-80 transition"
+          <div class="flex flex-col items-center cursor-pointer group hover:scale-105 transition-all duration-300"
                (click)="navigateTo('feats')">
-            <h3 class="text-lg font-bold text-custom-text mb-4">Feats of Strength</h3>
-            <div id="feats-achievement-arc" class="relative w-48 h-48">
+            <h3 class="text-lg font-bold text-custom-text mb-4 group-hover:text-blue-500">Feats of Strength</h3>
+            <div id="feats-achievement-arc" class="relative w-48 h-48 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
               <div class="absolute inset-0 flex items-center justify-center flex-col">
                 <span class="text-3xl font-bold text-custom-text">{{ achievementStats()?.feats?.completed }}/{{ achievementStats()?.feats?.total }}</span>
                 <span class="text-sm text-custom-text">({{ achievementStats()?.feats?.percentage | number:'1.0-0' }}%)</span>
@@ -60,9 +59,10 @@
           }
         } @else {
           @for (category of parentCategories(); track category.name) {
-            <div class="flex flex-col items-center bg-custom-bg p-4 rounded-lg">
-              <h4 class="text-sm font-semibold text-custom-text mb-2">{{ category.name }}</h4>
-              <div [id]="'category-arc-' + category.elementId" class="relative w-32 h-32">
+            <div class="flex flex-col items-center bg-custom-bg p-4 rounded-lg cursor-pointer group hover:scale-105 transition-all duration-300">
+              <h4 class="text-sm font-semibold text-custom-text mb-2 group-hover:text-blue-500">{{ category.name }}</h4>
+              <div [id]="'category-arc-' + category.elementId" 
+                   class="relative w-32 h-32 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
                 <div class="absolute inset-0 flex items-center justify-center flex-col">
                   <span class="text-lg font-bold text-custom-text">{{ category.completed }}/{{ category.total }}</span>
                   <span class="text-xs text-custom-text">({{ category.percentage | number:'1.0-0' }}%)</span>
