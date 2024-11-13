@@ -104,4 +104,14 @@ export class AchievementService {
       })
     );
   }
+
+  getFeatsAchievements(): Observable<Achievement[]> {
+    return this.getAllAchievements().pipe(
+      map(achievements => 
+        achievements.filter(achievement => 
+          achievement.data.category.name === 'Feats of Strength'
+        )
+      )
+    );
+  }
 }

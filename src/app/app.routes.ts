@@ -6,6 +6,7 @@ import { CollectionsComponent } from './components/collections/collections.compo
 import { AuthGuard } from './utils/auth/auth.guard';
 import { AchievementsComponent } from './components/achievements/achievements.component';
 import { LegacyComponent } from './components/achievements/legacy/legacy.component';
+import { FeatsComponent } from './components/achievements/feats/feats.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -22,10 +23,17 @@ export const routes: Routes = [
   },
   {
     path: 'achievements',
-    component: AchievementsComponent
+    component: AchievementsComponent,
+    canActivate: [AuthGuard],
   },
   {
     path: 'achievements/legacy',
-    component: LegacyComponent
+    component: LegacyComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'achievements/feats',
+    component: FeatsComponent,
+    canActivate: [AuthGuard],
   }
 ];
