@@ -31,37 +31,57 @@
                     </select>
                 </div>
 
-                @for (achievement of getFilteredAchievements(category.name); track achievement.achievementId) {
+                @for (achievement of getFilteredMainAchievements(category.name); track achievement.achievementId) {
                 <div class="mb-4">
                     <div class="flex items-center p-4 bg-custom-bg rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300"
                         [class.opacity-40]="!isCollected()(achievement)">
-                        <img [src]="achievement.data.media.assets[0].value" alt="{{ achievement.data.name }}"
-                            class="w-16 h-16 mr-4" [class.grayscale]="!isCollected()(achievement)">
-                        <div class="flex-grow">
-                            <h3 class="text-lg font-bold">{{ achievement.data.name }}</h3>
-                            <p class="text-sm">{{ achievement.data.description }}</p>
-                        </div>
-                        @if (getAchievementChain(achievement).length > 1) {
-                        <div class="collapse collapse-arrow min-h-0">
-                            <input type="checkbox" class="peer" />
-                            <div class="collapse-title min-h-0 p-0"></div>
-                            <div class="collapse-content">
-                                @for (chainAchievement of getPreviousAchievements(achievement); track
-                                chainAchievement.achievementId) {
-                                <div class="flex items-center mt-2 p-3 bg-custom-card-bg rounded-lg"
-                                    [class.opacity-40]="!isCollected()(chainAchievement)">
-                                    <img [src]="chainAchievement.data.media.assets[0].value"
-                                        alt="{{ chainAchievement.data.name }}" class="w-12 h-12 mr-3"
-                                        [class.grayscale]="!isCollected()(chainAchievement)">
-                                    <div>
-                                        <h4 class="text-md font-semibold">{{ chainAchievement.data.name }}</h4>
-                                        <p class="text-xs">{{ chainAchievement.data.description }}</p>
+                        <div class="flex items-center flex-grow"
+                             [class.cursor-pointer]="!hasChain(achievement)"
+                             (click)="!hasChain(achievement) ? openWowheadLink(achievement.data.id) : null">
+                            <img [src]="achievement.data.media.assets[0].value" alt="{{ achievement.data.name }}"
+                                class="w-16 h-16 mr-4" [class.grayscale]="!isCollected()(achievement)">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start">
+                                    <h3 class="text-lg font-bold">{{ achievement.data.name }}</h3>
+                                    @if (isCollected()(achievement) && !hasChain(achievement)) {
+                                        <span class="text-sm text-gray-400">
+                                            {{ getCompletionDate(achievement.data.id) }}
+                                        </span>
+                                    }
+                                </div>
+                                <p class="text-sm">{{ achievement.data.description }}</p>
+                            </div>
+                            @if (hasChain(achievement)) {
+                                <div class="collapse collapse-arrow min-h-0">
+                                    <input type="checkbox" class="peer" />
+                                    <div class="collapse-title min-h-0 p-0"></div>
+                                    <div class="collapse-content">
+                                        @for (chainAchievement of getChainAchievements(achievement); track chainAchievement.achievementId) {
+                                        <div class="flex items-center mt-2 p-3 bg-custom-card-bg rounded-lg">
+                                            <div class="flex items-center flex-grow cursor-pointer"
+                                                 (click)="openWowheadLink(chainAchievement.data.id)">
+                                                <img [src]="chainAchievement.data.media.assets[0].value"
+                                                    alt="{{ chainAchievement.data.name }}" 
+                                                    class="w-12 h-12 mr-3"
+                                                    [class.grayscale]="!isCollected()(chainAchievement)">
+                                                <div class="flex-grow">
+                                                    <div class="flex justify-between items-start">
+                                                        <h4 class="text-md font-semibold">{{ chainAchievement.data.name }}</h4>
+                                                        @if (isCollected()(chainAchievement)) {
+                                                            <span class="text-sm text-gray-400">
+                                                                {{ getCompletionDate(chainAchievement.data.id) }}
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    <p class="text-xs">{{ chainAchievement.data.description }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        }
                                     </div>
                                 </div>
-                                }
-                            </div>
+                            }
                         </div>
-                        }
                     </div>
                 </div>
                 }

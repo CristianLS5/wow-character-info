@@ -410,6 +410,6 @@ export class AchievementsComponent implements OnInit {
   }
 
   navigateTo(category: string) {
-    this.router.navigate([`/achievements/${category}`]);
+    this.router.navigate(['/achievements', category.toLowerCase()]);
   }
 }

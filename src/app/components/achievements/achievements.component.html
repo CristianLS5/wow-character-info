@@ -7,7 +7,6 @@
           <!-- Loading skeletons for main circles -->
           @for (i of [1,2,3]; track i) {
             <div class="flex flex-col items-center">
-              <h3 class="text-lg font-bold text-custom-text mb-4 skeleton w-24 h-6"></h3>
               <div class="skeleton w-48 h-48 rounded-full"></div>
             </div>
           }
@@ -59,7 +58,8 @@
           }
         } @else {
           @for (category of parentCategories(); track category.name) {
-            <div class="flex flex-col items-center bg-custom-bg p-4 rounded-lg cursor-pointer group hover:scale-105 transition-all duration-300">
+            <div class="flex flex-col items-center bg-custom-bg p-4 rounded-lg cursor-pointer group hover:scale-105 transition-all duration-300"
+                 (click)="navigateTo(category.elementId)">
               <h4 class="text-sm font-semibold text-custom-text mb-2 group-hover:text-blue-500">{{ category.name }}</h4>
               <div [id]="'category-arc-' + category.elementId" 
                    class="relative w-32 h-32 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">

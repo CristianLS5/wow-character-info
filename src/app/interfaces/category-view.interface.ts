@@ -4,7 +4,7 @@ import { Signal } from '@angular/core';
 export interface CategoryViewData {
   title: string;
   achievements: Signal<Achievement[]>;
-  completedAchievements: Signal<Map<number, boolean>>;
+  completedAchievements: Signal<Map<number, number>>;
   filterPredicate: (achievement: Achievement) => boolean;
 }
 

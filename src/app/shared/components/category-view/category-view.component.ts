@@ -28,20 +28,24 @@ export class CategoryViewComponent {
 
   protected isCollected = computed(
     () => (achievement: Achievement) =>
-      this.data.completedAchievements()?.get(achievement.data.id) || false
+      this.data.completedAchievements()?.has(achievement.data.id) || false
+  );
+
+  protected getCompletionTimestamp = computed(
+    () => (achievement: Achievement) =>
+      this.data.completedAchievements()?.get(achievement.data.id) || null
   );
 
   protected totalProgress = computed(() => {
-    const achievements = this.data.achievements();
-    const completedMap = this.data.completedAchievements();
+    const achievements = this.deduplicateAchievements(
+        this.data.achievements().filter(this.data.filterPredicate)
+    );
     
-    // Only count achievements that match our filter predicate
-    const filteredAchievements = achievements.filter(this.data.filterPredicate);
-    const completed = filteredAchievements
-      .filter(achievement => completedMap.get(achievement.data.id))
-      .length;
+    const completed = achievements.filter((achievement) =>
+        this.data.completedAchievements().get(achievement.data.id)
+    ).length;
 
-    return `${completed}/${filteredAchievements.length}`;
+    return `${completed}/${achievements.length}`;
   });
 
   getFilteredAchievements(categoryName: string): Achievement[] {
@@ -94,34 +98,135 @@ export class CategoryViewComponent {
     );
   }
 
-  getAchievementChain(achievement: Achievement): Achievement[] {
+  protected getAchievementChain(achievement: Achievement): Achievement[] {
     const chain: Achievement[] = [];
     let current: Achievement | undefined = achievement;
 
+    // First, find the earliest achievement in the chain
     while (current) {
-      chain.push(current);
-      current = this.data
-        .achievements()
-        .find((a) => a.data.next_achievement?.id === current?.data.id);
+        const previous = this.data.achievements().find(a => 
+            a.data.next_achievement?.id === current?.data.id
+        );
+        if (!previous) break;
+        current = previous;
     }
 
-    return chain.reverse();
+    // Now build the chain from first to last
+    while (current) {
+        chain.push(current);
+        current = this.data.achievements().find(a => 
+            current?.data.next_achievement?.id === a.data.id
+        );
+    }
+
+    return chain;
   }
 
-  getPreviousAchievements(achievement: Achievement): Achievement[] {
+  protected getChainAchievements(achievement: Achievement): Achievement[] {
     const chain = this.getAchievementChain(achievement);
-    return chain.slice(0, -1);
+    // Return the entire chain, including the last achievement
+    return chain;
+  }
+
+  protected getPreviousAchievements(achievement: Achievement): Achievement[] {
+    const chain = this.getChainAchievements(achievement);
+    return chain.slice(0, -1); // Return all but the last achievement
   }
 
   protected getTotalCategoryProgress(categoryName: string) {
-    const achievements = this.data.achievements()
-      .filter(a => a.data.category.name === categoryName)
-      .filter(this.data.filterPredicate);
+    const achievements = this.deduplicateAchievements(
+        this.data.achievements()
+            .filter((a) => a.data.category.name === categoryName)
+            .filter(this.data.filterPredicate)
+    );
 
-    const completed = achievements
-      .filter(a => this.isCollected()(a))
-      .length;
+    const completed = achievements.filter((a) => this.isCollected()(a)).length;
 
     return `${completed}/${achievements.length}`;
+  }
+
+  protected getCompletionDate(achievementId: number): string | null {
+    const timestamp = this.data.completedAchievements().get(achievementId);
+    
+    if (!timestamp || typeof timestamp !== 'number') {
+      return null;
+    }
+
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return null;
+    }
+  }
+
+  protected getFilteredMainAchievements(categoryName: string): Achievement[] {
+    // First get all achievements for this category
+    let achievements = this.getFilteredAchievements(categoryName);
+
+    // Deduplicate achievements
+    achievements = this.deduplicateAchievements(achievements);
+
+    // Filter out achievements that have next_achievement
+    achievements = achievements.filter(achievement => {
+        return !achievement.data.next_achievement;
+    });
+
+    // Debug log for Legacy category
+    if (categoryName === 'Legacy') {
+        console.log('Filtered Achievements:', achievements.map(a => ({
+            id: a.data.id,
+            name: a.data.name,
+            category: {
+                name: a.data.category.name,
+                parent: a.data.category.parent_category?.name
+            },
+            isCollected: this.isCollected()(a)
+        })));
+    }
+
+    return achievements;
+  }
+
+  protected openWowheadLink(achievementId: number): void {
+    window.open(`https://www.wowhead.com/achievement=${achievementId}`, '_blank');
+  }
+
+  protected hasChain(achievement: Achievement): boolean {
+    return this.getAchievementChain(achievement).length > 1;
+  }
+
+  // Helper method to deduplicate achievements
+  private deduplicateAchievements(achievements: Achievement[]): Achievement[] {
+    // Create a map to group achievements by name and category
+    const achievementGroups = achievements.reduce((acc, achievement) => {
+        const key = `${achievement.data.name}_${achievement.data.category.name}`;
+        if (!acc.has(key)) {
+            acc.set(key, []);
+        }
+        acc.get(key)?.push(achievement);
+        return acc;
+    }, new Map<string, Achievement[]>());
+
+    // For each group, select the appropriate achievement
+    return Array.from(achievementGroups.values()).map(group => {
+        if (group.length === 1) {
+            return group[0];
+        }
+
+        // If there are multiple achievements, prefer completed ones
+        const completed = group.find(a => this.isCollected()(a));
+        if (completed) {
+            return completed;
+        }
+
+        // If none are completed, take the first one
+        return group[0];
+    });
   }
 }

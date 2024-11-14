@@ -5,8 +5,7 @@ import { AuthCallbackComponent } from './components/auth-callback/auth-callback.
 import { CollectionsComponent } from './components/collections/collections.component';
 import { AuthGuard } from './utils/auth/auth.guard';
 import { AchievementsComponent } from './components/achievements/achievements.component';
-import { LegacyComponent } from './components/achievements/legacy/legacy.component';
-import { FeatsComponent } from './components/achievements/feats/feats.component';
+import { CategoryDetailsComponent } from './components/achievements/category-details/category-details.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -27,13 +26,8 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
-    path: 'achievements/legacy',
-    component: LegacyComponent,
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'achievements/feats',
-    component: FeatsComponent,
-    canActivate: [AuthGuard],
+    path: 'achievements/:category',
+    component: CategoryDetailsComponent,
+    canActivate: [AuthGuard]
   }
 ];
