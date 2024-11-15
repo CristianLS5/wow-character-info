@@ -2,62 +2,9 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { forkJoin, Observable, throwError } from 'rxjs';
-
-interface CharacterEquipment {
-  equipped_items: Array<{
-    name: string;
-    quality: { type: string; name: string };
-    level: { value: number; display_string: string };
-    item: { id: number };
-    slot: { type: string; name: string };
-    iconUrl?: string;
-  }>;
-}
-
-interface CharacterMedia {
-  assets: Array<{
-    key: string;
-    value: string;
-  }>;
-}
-
-interface CharacterProfile {
-  name: string;
-  gender: string;
-  faction: string;
-  race: string;
-  character_class: {
-    key: { href: string };
-    name: string;
-    id: number;
-  };
-  active_spec: {
-    key: { href: string };
-    name: string;
-    id: number;
-  };
-  realm: {
-    key: { href: string };
-    name: string;
-    id: number;
-    slug: string;
-  };
-  guild?: {
-    name: string;
-    realm: {
-      key: { href: string };
-      name: string;
-      id: number;
-      slug: string;
-    };
-  };
-  level: number;
-  experience: number;
-  achievement_points: number;
-  last_login_timestamp: number;
-  average_item_level: number;
-  equipped_item_level: number;
-}
+import { CharacterEquipment } from '../interfaces/character-equipment.interface';
+import { CharacterMedia } from '../interfaces/character-media.interface';
+import { CharacterInfo } from '../interfaces/character.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -68,7 +15,7 @@ export class CharacterService {
   private loadingSignal = signal<boolean>(false);
   private characterEquipmentSignal = signal<CharacterEquipment | null>(null);
   private characterMediaSignal = signal<CharacterMedia | null>(null);
-  private characterProfileSignal = signal<CharacterProfile | null>(null);
+  private characterProfileSignal = signal<CharacterInfo | null>(null);
   private errorSignal = signal<string | null>(null);
 
   loading = computed(() => this.loadingSignal());
@@ -79,7 +26,7 @@ export class CharacterService {
   fetchAllCharacterData(
     realm: string,
     characterName: string
-  ): Observable<[CharacterEquipment, CharacterMedia, CharacterProfile]> {
+  ): Observable<[CharacterEquipment, CharacterMedia, CharacterInfo]> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
@@ -126,9 +73,9 @@ export class CharacterService {
   getCharacterProfile(
     realm: string,
     characterName: string
-  ): Observable<CharacterProfile> {
+  ): Observable<CharacterInfo> {
     const url = `${this.apiUrl}/character/${realm}/${characterName}/profile`;
-    return this.http.get<CharacterProfile>(url).pipe(
+    return this.http.get<CharacterInfo>(url).pipe(
       tap((data) => {
         console.log('Character profile data:', data);
         this.characterProfileSignal.set(data);
@@ -174,12 +121,26 @@ export class CharacterService {
     // Clear any other relevant data
   }
 
-  getCharacterInfo(): { realmSlug: string; characterName: string } | null {
+  getCharacterInfo(): CharacterInfo | null {
     const profile = this.characterProfileSignal();
     if (profile) {
       return {
+        name: profile.name,
         realmSlug: profile.realm.slug,
         characterName: profile.name,
+        gender: profile.gender,
+        faction: profile.faction,
+        race: profile.race,
+        character_class: profile.character_class,
+        active_spec: profile.active_spec,
+        realm: profile.realm,
+        guild: profile.guild,
+        level: profile.level,
+        experience: profile.experience,
+        achievement_points: profile.achievement_points,
+        last_login_timestamp: profile.last_login_timestamp,
+        average_item_level: profile.average_item_level,
+        equipped_item_level: profile.equipped_item_level,
       };
     }
     return null;

@@ -18,6 +18,12 @@ export interface Achievement {
         name: string;
       };
     };
+    requirements?: {
+      faction: {
+        type: string;
+        name: string;
+      };
+    };
     next_achievement?: {
       key: {
         href: string;
@@ -39,15 +45,9 @@ export interface Achievement {
     criteria?: {
       id: number;
       description: string;
-      amount: number;
-      operator: {
-        type: string;
-        name: string;
-      };
       child_criteria?: Array<{
         id: number;
         description: string;
-        amount: number;
       }>;
     };
   };
