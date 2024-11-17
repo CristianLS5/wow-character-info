@@ -45,9 +45,11 @@ export interface Achievement {
     criteria?: {
       id: number;
       description: string;
+      is_completed: boolean;
       child_criteria?: Array<{
         id: number;
         description: string;
+        is_completed: boolean;
       }>;
     };
   };

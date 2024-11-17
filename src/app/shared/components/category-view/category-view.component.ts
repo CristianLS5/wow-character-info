@@ -6,6 +6,8 @@ import {
   CategoryStats,
   FilteredAchievements,
 } from '../../../interfaces/category-view.interface';
+import { CharacterService } from '../../../services/character.service';
+import { AchievementProgressService } from '../../../services/achievement-progress.service';
 
 @Component({
   selector: 'app-category-view',
@@ -16,10 +18,14 @@ import {
 export class CategoryViewComponent {
   @Input() data!: CategoryViewData;
 
+  // Inject CharacterService in constructor
+  constructor(
+    private achievementProgressService: AchievementProgressService,
+    private characterService: CharacterService
+  ) {}
+
   // Signal for filtered achievements by category
-  private filteredAchievements = signal<Record<string, FilteredAchievements>>(
-    {}
-  );
+  private filteredAchievements = signal<Record<string, FilteredAchievements>>({});
 
   // Computed values
   protected categories = computed(() =>
@@ -27,8 +33,20 @@ export class CategoryViewComponent {
   );
 
   protected isCollected = computed(
-    () => (achievement: Achievement) =>
-      this.data.completedAchievements()?.has(achievement.data.id) || false
+    () => (achievement: Achievement) => {
+      // Check if we have a completion timestamp
+      const timestamp = this.data.completedAchievements()?.get(achievement.data.id);
+      if (timestamp != null && timestamp > 0) {
+        return true;
+      }
+
+      // Check criteria completion if available
+      if (achievement.data.criteria) {
+        return achievement.data.criteria.is_completed === true;
+      }
+
+      return false;
+    }
   );
 
   protected getCompletionTimestamp = computed(
@@ -37,15 +55,12 @@ export class CategoryViewComponent {
   );
 
   protected totalProgress = computed(() => {
-    const achievements = this.deduplicateAchievements(
-        this.data.achievements().filter(this.data.filterPredicate)
+    const progress = this.achievementProgressService.calculateProgress(
+      this.data.achievements(),
+      this.data.completedAchievements(),
+      this.data.filterPredicate
     );
-    
-    const completed = achievements.filter((achievement) =>
-        this.data.completedAchievements().get(achievement.data.id)
-    ).length;
-
-    return `${completed}/${achievements.length}`;
+    return `${progress.completed}/${progress.total}`;
   });
 
   getFilteredAchievements(categoryName: string): Achievement[] {
@@ -134,15 +149,12 @@ export class CategoryViewComponent {
   }
 
   protected getTotalCategoryProgress(categoryName: string) {
-    const achievements = this.deduplicateAchievements(
-        this.data.achievements()
-            .filter((a) => a.data.category.name === categoryName)
-            .filter(this.data.filterPredicate)
+    const progress = this.achievementProgressService.calculateProgress(
+      this.data.achievements().filter(a => a.data.category.name === categoryName),
+      this.data.completedAchievements(),
+      this.data.filterPredicate
     );
-
-    const completed = achievements.filter((a) => this.isCollected()(a)).length;
-
-    return `${completed}/${achievements.length}`;
+    return `${progress.completed}/${progress.total}`;
   }
 
   protected getCompletionDate(achievementId: number): string | null {
@@ -203,30 +215,60 @@ export class CategoryViewComponent {
 
   // Helper method to deduplicate achievements
   private deduplicateAchievements(achievements: Achievement[]): Achievement[] {
-    // Create a map to group achievements by name and category
+    const characterFaction = this.characterService.getCharacterInfo()?.faction?.name?.toLowerCase() || '';
+
+    // Create a map to group achievements by their unique characteristics
     const achievementGroups = achievements.reduce((acc, achievement) => {
-        const key = `${achievement.data.name}_${achievement.data.category.name}`;
-        if (!acc.has(key)) {
-            acc.set(key, []);
-        }
-        acc.get(key)?.push(achievement);
-        return acc;
+      // Create a unique key combining description, category ID, and parent category ID
+      const key = `${achievement.data.description}_${achievement.data.category.id}_${achievement.data.category.parent_category?.id || 'none'}`;
+      if (!acc.has(key)) {
+        acc.set(key, []);
+      }
+      acc.get(key)?.push(achievement);
+      return acc;
     }, new Map<string, Achievement[]>());
 
     // For each group, select the appropriate achievement
     return Array.from(achievementGroups.values()).map(group => {
-        if (group.length === 1) {
-            return group[0];
-        }
-
-        // If there are multiple achievements, prefer completed ones
-        const completed = group.find(a => this.isCollected()(a));
-        if (completed) {
-            return completed;
-        }
-
-        // If none are completed, take the first one
+      if (group.length === 1) {
         return group[0];
+      }
+
+      // Check if these are faction-specific achievements
+      const factionAchievements = group.filter(a => a.data.requirements?.faction?.name);
+      
+      if (factionAchievements.length > 0) {
+        // Try to find achievement matching character's faction
+        const factionMatch = factionAchievements.find(a => 
+          a.data.requirements?.faction?.name?.toLowerCase() === characterFaction
+        );
+        
+        if (factionMatch) {
+          return factionMatch;
+        }
+      }
+
+      // If no faction match or not faction-specific, prefer completed ones
+      const completed = group.find(a => this.isCollected()(a));
+      if (completed) {
+        return completed;
+      }
+
+      // If none are completed, take the first one
+      return group[0];
     });
+  }
+
+  protected getFactionRequirement(achievement: Achievement): string | null {
+    const characterFaction = this.characterService.getCharacterInfo()?.faction?.name;
+    const achievementFaction = achievement.data.requirements?.faction?.name;
+    
+    // Only show requirement if it's for the opposite faction
+    if (!achievementFaction || achievementFaction === characterFaction) {
+      return null;
+    }
+    
+    // If character is Horde, show Alliance Only, and vice versa
+    return achievementFaction === 'Alliance' ? 'Alliance Only' : 'Horde Only';
   }
 }

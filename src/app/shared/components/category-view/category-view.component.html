@@ -42,7 +42,18 @@
                                 class="w-16 h-16 mr-4" [class.grayscale]="!isCollected()(achievement)">
                             <div class="flex-grow">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-lg font-bold">{{ achievement.data.name }}</h3>
+                                    <h3 class="text-lg font-bold">
+                                        {{ achievement.data.name }}
+                                        @if (getFactionRequirement(achievement)) {
+                                            <span class="text-sm ml-2 italic"
+                                                  [ngClass]="{
+                                                    'text-[#0078FF]': getFactionRequirement(achievement) === 'Alliance Only',
+                                                    'text-[#FF4500]': getFactionRequirement(achievement) === 'Horde Only'
+                                                  }">
+                                                {{ getFactionRequirement(achievement) }}
+                                            </span>
+                                        }
+                                    </h3>
                                     @if (isCollected()(achievement) && !hasChain(achievement)) {
                                         <span class="text-sm text-gray-400">
                                             {{ getCompletionDate(achievement.data.id) }}
@@ -66,7 +77,18 @@
                                                     [class.grayscale]="!isCollected()(chainAchievement)">
                                                 <div class="flex-grow">
                                                     <div class="flex justify-between items-start">
-                                                        <h4 class="text-md font-semibold">{{ chainAchievement.data.name }}</h4>
+                                                        <h4 class="text-md font-semibold">
+                                                            {{ chainAchievement.data.name }}
+                                                            @if (getFactionRequirement(chainAchievement)) {
+                                                                <span class="text-sm ml-2 italic"
+                                                                      [ngClass]="{
+                                                                        'text-[#0078FF]': getFactionRequirement(chainAchievement) === 'Alliance Only',
+                                                                        'text-[#FF4500]': getFactionRequirement(chainAchievement) === 'Horde Only'
+                                                                      }">
+                                                                    {{ getFactionRequirement(chainAchievement) }}
+                                                                </span>
+                                                            }
+                                                        </h4>
                                                         @if (isCollected()(chainAchievement)) {
                                                             <span class="text-sm text-gray-400">
                                                                 {{ getCompletionDate(chainAchievement.data.id) }}
