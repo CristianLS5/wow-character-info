@@ -22,5 +22,6 @@ export class SubheaderComponent {
     { label: 'Character', route: '/character' },
     { label: 'Collections', route: '/collections' },
     { label: 'Achievements', route: '/achievements' },
+    { label: 'Reputations', route: '/reputations' },
   ];
 }
