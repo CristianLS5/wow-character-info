@@ -1,0 +1,49 @@
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+    <div class="p-4 overflow-y-auto h-full">
+        @if (isLoading) {
+            <div class="flex justify-center items-center min-h-[200px]">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        } @else if (error) {
+            <div class="text-center p-8 bg-custom-card-bg rounded-lg">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-lg font-semibold mb-2">No Mythic+ Data Available</p>
+                <p class="text-gray-400">{{ error }}</p>
+            </div>
+        } @else {
+            <!-- Season Overview -->
+            @if (seasonData && currentSeason) {
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold">{{ currentSeason.seasonName || 'Current Season' }}</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-semibold" 
+                              [style.color]="getRatingColor(seasonData.mythic_rating.color)">
+                            {{ seasonData.mythic_rating.rating | number:'1.0-0' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Season Runs -->
+            @if (bestRuns.length) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                @for (run of bestRuns; track run.dungeon.id) {
+                    <app-dungeon-card [run]="run" />
+                }
+            </div>
+            } @else {
+            <div class="text-center p-8 bg-custom-card-bg rounded-lg">
+                <p class="text-lg">No Mythic+ dungeons completed this season.</p>
+                <p class="text-sm text-gray-400 mt-2">Complete a Mythic+ dungeon to see your progress here.</p>
+            </div>
+            }
+            }
+        }
+    </div>
+</div>

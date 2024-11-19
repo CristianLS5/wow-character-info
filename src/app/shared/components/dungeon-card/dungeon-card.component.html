@@ -1,0 +1,54 @@
+<div class="relative bg-custom-card-bg rounded-lg overflow-hidden h-[200px] group 
+            shadow-md hover:shadow-glow transition-all duration-300">
+    <!-- Background Image -->
+    @if (run.media) {
+    <div class="absolute inset-0 z-0">
+        <img [src]="run.media" 
+             [alt]="run.dungeon.name" 
+             class="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity">
+    </div>
+    }
+
+    <!-- Content -->
+    <div class="relative z-10 p-4 h-full flex flex-col">
+        <div class="flex justify-between items-start mb-2">
+            <h3 class="font-semibold text-lg text-white">{{ run.dungeon.name }}</h3>
+            <div class="flex flex-col items-end">
+                <span class="font-bold text-lg text-white bg-custom-bg/50 px-2 py-1 rounded">
+                    +{{ run.keystone_level }}
+                </span>
+            </div>
+        </div>
+
+        <div class="mt-auto">
+            @if (run.keystone_affixes.length) {
+            <div class="flex flex-wrap gap-2">
+                @for (affix of run.keystone_affixes; track affix.id) {
+                <a [href]="'https://www.wowhead.com/affix=' + affix.id" 
+                   target="_blank"
+                   class="block transition-transform hover:scale-110 hover:shadow-glow rounded">
+                    @if (affixDetails.get(affix.id)?.icon) {
+                    <img [src]="affixDetails.get(affix.id)?.icon" 
+                         [alt]="affix.name"
+                         class="w-8 h-8 rounded cursor-pointer">
+                    } @else {
+                    <span class="px-2 py-1 bg-custom-bg/80 rounded text-sm text-white">
+                        {{ affix.name }}
+                    </span>
+                    }
+                </a>
+                }
+            </div>
+            }
+            
+            <div class="flex justify-between items-center mt-3">
+                <span class="text-base text-white/80 font-medium">
+                    {{ formatDuration(run.duration) }}
+                </span>
+                <span class="text-base font-semibold" [style.color]="getRatingColor()">
+                    {{ run.mythic_rating.rating.toFixed(1) }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
