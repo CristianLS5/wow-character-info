@@ -7,6 +7,7 @@ import {
   Affix,
 } from '../interfaces/dungeons.interface';
 import { SeasonsResponse } from '../interfaces/season.interface';
+import { RaidProfile } from '../interfaces/raids.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -127,6 +128,41 @@ export class InstanceService {
         console.error(`Error fetching affix ${id}:`, error);
         return throwError(() => ({
           error: 'Failed to fetch affix details',
+          details: error.message || 'Unknown error occurred',
+        }));
+      })
+    );
+  }
+
+  getCharacterRaids(
+    realmSlug: string,
+    characterName: string
+  ): Observable<RaidProfile> {
+    const url = `${this.apiUrl}/raids/${realmSlug}/${characterName}`;
+    
+    console.log('=== Raids Request ===');
+    console.log('URL:', url);
+    console.log('Parameters:', { realmSlug, characterName });
+
+    return this.http.get<RaidProfile>(url).pipe(
+      tap(response => {
+        console.log('=== Raids API Response ===');
+        console.log(JSON.stringify(response, null, 2));
+      }),
+      catchError((error: HttpErrorResponse) => {
+        console.error('=== Raids Error ===');
+        console.error('Status:', error.status);
+        console.error('Message:', error.message);
+        console.error('Error details:', error.error);
+        
+        if (error.status === 404) {
+          return throwError(() => ({
+            error: 'Raid data not available',
+            details: 'No raid data found for this character.',
+          }));
+        }
+        return throwError(() => ({
+          error: 'Failed to fetch raid information',
           details: error.message || 'Unknown error occurred',
         }));
       })

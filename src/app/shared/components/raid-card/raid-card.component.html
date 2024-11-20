@@ -1,0 +1,38 @@
+<div class="bg-custom-card-bg rounded-lg overflow-hidden shadow-md hover:shadow-glow transition-all duration-300 relative group">
+    <!-- Background Image -->
+    @if (raid.instance.media) {
+    <div class="absolute inset-0 z-0">
+        <img [src]="raid.instance.media" 
+             [alt]="raid.instance.name" 
+             class="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity">
+    </div>
+    }
+    
+    <!-- Content -->
+    <div class="relative z-10 p-4">
+        <h3 class="font-semibold text-lg text-white mb-4">{{ raid.instance.name }}</h3>
+        
+        <div class="space-y-4">
+            @for (mode of raid.modes; track mode.difficulty.type) {
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span [class]="getDifficultyTextColor(mode.difficulty.type)"
+                          class="font-medium">
+                        {{ mode.difficulty.name }}
+                    </span>
+                    <span class="text-sm font-medium text-white/90">
+                        {{ mode.progress.completedCount }}/{{ mode.progress.totalCount }}
+                    </span>
+                </div>
+                
+                <div class="w-full bg-gray-700/50 rounded-full h-2.5">
+                    <div class="h-2.5 rounded-full transition-all duration-300"
+                         [class]="getDifficultyColor(mode.difficulty.type)"
+                         [style.width.%]="getProgressPercentage(mode.progress.completedCount, mode.progress.totalCount)">
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>

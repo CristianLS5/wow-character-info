@@ -10,39 +10,46 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <p class="text-lg font-semibold mb-2">No Mythic+ Data Available</p>
+                <p class="text-lg font-semibold mb-2">No Instance Data Available</p>
                 <p class="text-gray-400">{{ error }}</p>
             </div>
         } @else {
-            <!-- Season Overview -->
+            <!-- Mythic+ Section -->
             @if (seasonData && currentSeason) {
             <div class="mb-8">
                 <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h2 class="text-2xl font-bold">{{ currentSeason.seasonName || 'Current Season' }}</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl font-semibold" 
-                              [style.color]="getRatingColor(seasonData.mythic_rating.color)">
-                            {{ seasonData.mythic_rating.rating | number:'1.0-0' }}
-                        </span>
-                    </div>
+                    <h2 class="text-2xl font-bold">{{ currentSeason.seasonName || 'Current Season' }}</h2>
+                    <span class="text-xl font-semibold" 
+                          [style.color]="getRatingColor(seasonData.mythic_rating.color)">
+                        {{ seasonData.mythic_rating.rating | number:'1.0-0' }}
+                    </span>
                 </div>
-            </div>
 
-            <!-- Best Season Runs -->
-            @if (bestRuns.length) {
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                @for (run of bestRuns; track run.dungeon.id) {
-                    <app-dungeon-card [run]="run" />
+                @if (bestRuns.length) {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    @for (run of bestRuns; track run.dungeon.id) {
+                        <app-dungeon-card [run]="run" />
+                    }
+                </div>
+                } @else {
+                <div class="text-center p-8 bg-custom-card-bg rounded-lg">
+                    <p class="text-lg">No Mythic+ dungeons completed this season.</p>
+                    <p class="text-sm text-gray-400 mt-2">Complete a Mythic+ dungeon to see your progress here.</p>
+                </div>
                 }
             </div>
-            } @else {
-            <div class="text-center p-8 bg-custom-card-bg rounded-lg">
-                <p class="text-lg">No Mythic+ dungeons completed this season.</p>
-                <p class="text-sm text-gray-400 mt-2">Complete a Mythic+ dungeon to see your progress here.</p>
-            </div>
             }
+
+            <!-- Raids Section -->
+            @if (raidData && getCurrentRaidExpansion(raidData)) {
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold mb-4">{{ getCurrentRaidExpansion(raidData)!.name }}</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @for (instance of getCurrentRaidExpansion(raidData)!.instances; track instance.instance.id) {
+                        <app-raid-card [raid]="instance" />
+                    }
+                </div>
+            </div>
             }
         }
     </div>
