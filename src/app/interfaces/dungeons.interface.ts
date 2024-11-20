@@ -6,15 +6,15 @@ export interface Affix {
 }
 
 export interface DungeonRun {
-  completed_timestamp: number;
+  completedTimestamp: string;
   duration: number;
-  keystone_level: number;
+  keystoneLevel: number;
   dungeon: {
     id: number;
     name: string;
     media?: string;
   };
-  is_completed_within_time: boolean;
+  isCompleted: boolean;
   mythic_rating: {
     color: {
       r: number;
@@ -37,7 +37,7 @@ export interface DungeonsResponse {
   season: {
     id: number;
   };
-  best_runs: DungeonRun[];
+  bestRuns: DungeonRun[];
   mythic_rating: {
     color: {
       r: number;

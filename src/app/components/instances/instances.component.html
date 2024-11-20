@@ -19,10 +19,12 @@
             <div class="mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-2xl font-bold">{{ currentSeason.seasonName || 'Current Season' }}</h2>
-                    <span class="text-xl font-semibold" 
-                          [style.color]="getRatingColor(seasonData.mythic_rating.color)">
-                        {{ seasonData.mythic_rating.rating | number:'1.0-0' }}
-                    </span>
+                    @if (seasonData.mythic_rating) {
+                        <span class="text-xl font-semibold" 
+                              [style.color]="getRatingColor(seasonData.mythic_rating.color)">
+                            {{ seasonData.mythic_rating.rating | number:'1.0-0' }}
+                        </span>
+                    }
                 </div>
 
                 @if (bestRuns.length) {

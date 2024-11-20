@@ -27,40 +27,39 @@ export class InstancesComponent implements OnInit {
   isLoading = true;
   error: string | null = null;
 
-  private getBestRunsPerDungeon(runs: DungeonRun[]): DungeonRun[] {
-    console.log('=== getBestRunsPerDungeon ===');
-    console.log('Input runs:', JSON.stringify(runs, null, 2));
+  getRatingColor(
+    color: { r: number; g: number; b: number; a: number } | undefined
+  ): string {
+    if (!color) {
+      return '#808080';
+    }
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+  }
 
+  getBestRunsPerDungeon(runs: DungeonRun[] | undefined) {
     if (!runs || !Array.isArray(runs)) {
       console.warn('Received invalid runs data:', runs);
       return [];
     }
 
+    // Filter for completed runs only
+    const completedRuns = runs.filter((run) => run.isCompleted);
+
     const dungeonMap = new Map<number, DungeonRun>();
 
-    runs.forEach((run) => {
-      console.log('Processing run:', JSON.stringify(run, null, 2));
-      const existingRun = dungeonMap.get(run.dungeon.id);
-      if (!existingRun || run.keystone_level > existingRun.keystone_level) {
-        console.log(
-          `Setting best run for dungeon ${run.dungeon.name} (${run.dungeon.id})`
-        );
-        dungeonMap.set(run.dungeon.id, run);
+    completedRuns.forEach((run) => {
+      const dungeonId = run.dungeon.id;
+      const existingRun = dungeonMap.get(dungeonId);
+
+      if (
+        !existingRun ||
+        run.mythic_rating.rating > existingRun.mythic_rating.rating
+      ) {
+        dungeonMap.set(dungeonId, run);
       }
     });
 
-    const result = Array.from(dungeonMap.values());
-    console.log('Final processed runs:', JSON.stringify(result, null, 2));
-    return result;
-  }
-
-  getRatingColor(color: {
-    r: number;
-    g: number;
-    b: number;
-    a: number;
-  }): string {
-    return `rgb(${color.r}, ${color.g}, ${color.b})`;
+    return Array.from(dungeonMap.values());
   }
 
   getCurrentRaidExpansion(raidData: RaidProfile): RaidExpansion | null {
@@ -89,7 +88,7 @@ export class InstancesComponent implements OnInit {
       seasons: this.instanceService.getSeasons(),
       raids: this.instanceService.getCharacterRaids(
         character.realm.slug,
-        character.name.toLowerCase()
+        character.name
       ),
     })
       .pipe(
@@ -122,7 +121,7 @@ export class InstancesComponent implements OnInit {
       .subscribe({
         next: (seasonData) => {
           this.seasonData = seasonData;
-          this.bestRuns = this.getBestRunsPerDungeon(seasonData.best_runs);
+          this.bestRuns = this.getBestRunsPerDungeon(seasonData.bestRuns);
           this.isLoading = false;
         },
         error: (err) => {
