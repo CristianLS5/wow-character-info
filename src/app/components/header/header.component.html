@@ -19,19 +19,24 @@
                 </li>
                 <li class="dropdown-item">
                   <span class="block text-sm">
+                    {{ characterProfile()?.race?.name }} - 
                     {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
                   </span>
                 </li>
                 <li class="dropdown-item">
-                  <span class="block text-sm">iLvl: {{ characterProfile()?.average_item_level }}</span>
+                  <span class="block text-sm">
+                    &lt;{{ characterProfile()?.guild?.name }}&gt; {{ characterProfile()?.realm?.name }}
+                  </span>
                 </li>
-                @if (characterProfile()?.guild) {
-                  <li class="dropdown-item">
-                    <span class="block text-sm">
-                      &lt;{{ characterProfile()?.guild?.name }}&gt; - {{ characterProfile()?.realm?.name }}
-                    </span>
-                  </li>
-                }
+                <li class="dropdown-item flex items-center gap-2">
+                  <img src="assets/icons/achievement.svg" alt="Achievements" class="w-4 h-4">
+                  <span class="text-sm">{{ characterProfile()?.achievement_points }} points</span>
+                </li>
+                <li class="dropdown-item">
+                  <span class="block text-sm">
+                    Level: {{ characterProfile()?.level }} - iLvl: {{ characterProfile()?.average_item_level }}
+                  </span>
+                </li>
                 <li class="dropdown-item pt-2">
                   <button (click)="onLogout()" 
                           class="w-full text-center px-4 py-2 bg-red-500 text-white rounded-md 

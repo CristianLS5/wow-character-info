@@ -2,12 +2,19 @@ export interface CharacterInfo {
   name: string;
   realmSlug: string;
   characterName: string;
-  gender: string;
-  faction: {
-    name: string;
+  gender: {
     type: string;
+    name: string;
   };
-  race: string;
+  faction: {
+    type: string;
+    name: string;
+  };
+  race: {
+    key: { href: string };
+    name: string;
+    id: number;
+  };
   character_class: {
     key: { href: string };
     name: string;
