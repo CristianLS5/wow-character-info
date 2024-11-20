@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ReputationService } from '../../services/reputation.service';
 import { CharacterService } from '../../services/character.service';
 import { ReputationResponse } from '../../interfaces/reputation.interface';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-reputations',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingComponent],
   templateUrl: './reputations.component.html',
   styleUrl: './reputations.component.sass',
 })

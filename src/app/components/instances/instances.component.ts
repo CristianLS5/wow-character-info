@@ -8,11 +8,12 @@ import { DungeonCardComponent } from '../../shared/components/dungeon-card/dunge
 import { RaidCardComponent } from '../../shared/components/raid-card/raid-card.component';
 import { switchMap, catchError, EMPTY, forkJoin } from 'rxjs';
 import { DungeonSeason } from '../../interfaces/season.interface';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-instances',
   standalone: true,
-  imports: [CommonModule, DungeonCardComponent, RaidCardComponent],
+  imports: [CommonModule, DungeonCardComponent, RaidCardComponent, LoadingComponent],
   templateUrl: './instances.component.html',
   styleUrl: './instances.component.sass',
 })

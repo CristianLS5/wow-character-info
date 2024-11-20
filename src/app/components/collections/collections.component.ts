@@ -15,6 +15,7 @@ import { CharacterService } from '../../services/character.service';
 import { PET_TYPES } from '../../interfaces/pet.interface';
 import { TransmogSet } from '../../interfaces/transmog.interface';
 import { Heirloom } from '../../interfaces/heirloom.interface';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 interface Asset {
   key: string;
@@ -135,7 +136,11 @@ interface Toy {
 @Component({
   selector: 'app-collections',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, 
+    FormsModule,
+    LoadingComponent
+  ],
   templateUrl: './collections.component.html',
   styleUrls: ['./collections.component.sass'],
 })

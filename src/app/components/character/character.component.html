@@ -1,17 +1,12 @@
 <div class="h-[calc(100vh-64px)] bg-custom-bg text-custom-text overflow-hidden">
     @if (characterService.loading()) {
-    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-40">
-        <div role="status">
-            <img src="assets/icons/loading-spinner.svg" alt="Loading..." class="w-16 h-16">
-            <span class="sr-only">Loading...</span>
-        </div>
-    </div>
+        <app-loading />
     } @else if (characterService.error()) {
-    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-40">
-        <div class="bg-red-500 text-white p-4 rounded-lg">
-            {{ characterService.error() }}
+        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-40">
+            <div class="bg-red-500 text-white p-4 rounded-lg">
+                {{ characterService.error() }}
+            </div>
         </div>
-    </div>
     } @else if (characterService.isDataAvailable()) {
     <div class="relative h-full">
         @if (getMainRawImage()) {

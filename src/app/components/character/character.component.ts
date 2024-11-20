@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EquipmentCardComponent } from '../equipment-card/equipment-card.component';
 import { getClassColor, getFactionColor } from '../../utils/class-colors';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 interface CharacterEquipment {
   equipped_items: Array<{
@@ -19,7 +20,7 @@ interface CharacterEquipment {
 @Component({
   selector: 'app-character',
   standalone: true,
-  imports: [CommonModule, FormsModule, EquipmentCardComponent],
+  imports: [CommonModule, FormsModule, EquipmentCardComponent, LoadingComponent],
   templateUrl: './character.component.html',
   styleUrl: './character.component.sass',
 })

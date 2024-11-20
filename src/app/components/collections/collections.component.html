@@ -143,8 +143,8 @@
 
         <!-- Content -->
         @if (isLoading) {
-            <div class="flex justify-center items-center h-64">
-                <span class="loading loading-spinner loading-lg"></span>
+            <div class="flex justify-center items-center h-[calc(100vh-250px)]">
+                <app-loading />
             </div>
         } @else {
             <!-- Mount/Pet grid content here -->

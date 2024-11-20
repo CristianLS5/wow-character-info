@@ -2,10 +2,10 @@
     <div class="p-4 overflow-y-auto h-full">
         @if (isLoading) {
             <div class="flex justify-center items-center min-h-[200px]">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <app-loading />
             </div>
         } @else if (error) {
-            <div class="text-center p-8 bg-custom-card-bg rounded-lg">
+            <div class="text-center p-8 bg-custom-card-bg rounded-lg animate-fade-in-right">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -16,7 +16,7 @@
         } @else {
             <!-- Mythic+ Section -->
             @if (seasonData && currentSeason) {
-            <div class="mb-8">
+            <div class="mb-8 animate-fade-in-right">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-2xl font-bold">{{ currentSeason.seasonName || 'Current Season' }}</h2>
                     @if (seasonData.mythic_rating) {
@@ -29,8 +29,11 @@
 
                 @if (bestRuns.length) {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    @for (run of bestRuns; track run.dungeon.id) {
-                        <app-dungeon-card [run]="run" />
+                    @for (run of bestRuns; track run.dungeon.id; let i = $index) {
+                        <div class="animate-fade-in-right" 
+                             [style.animation-delay]="i * 50 + 'ms'">
+                            <app-dungeon-card [run]="run" />
+                        </div>
                     }
                 </div>
                 } @else {
@@ -44,11 +47,14 @@
 
             <!-- Raids Section -->
             @if (raidData && getCurrentRaidExpansion(raidData)) {
-            <div class="mt-12">
+            <div class="mt-12 animate-fade-in-right">
                 <h2 class="text-2xl font-bold mb-4">{{ getCurrentRaidExpansion(raidData)!.name }}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @for (instance of getCurrentRaidExpansion(raidData)!.instances; track instance.instance.id) {
-                        <app-raid-card [raid]="instance" />
+                    @for (instance of getCurrentRaidExpansion(raidData)!.instances; track instance.instance.id; let i = $index) {
+                        <div class="animate-fade-in-right" 
+                             [style.animation-delay]="i * 50 + 'ms'">
+                            <app-raid-card [raid]="instance" />
+                        </div>
                     }
                 </div>
             </div>

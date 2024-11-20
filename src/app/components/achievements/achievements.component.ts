@@ -7,6 +7,7 @@ import { Achievement } from '../../interfaces/achievement.interface';
 import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { AchievementProgressService } from '../../services/achievement-progress.service';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 interface CategoryStats {
   completed: number;
@@ -32,7 +33,7 @@ interface ArcData {
 @Component({
   selector: 'app-achievements',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingComponent],
   templateUrl: './achievements.component.html',
   styleUrls: ['./achievements.component.sass'],
 })
@@ -332,8 +333,8 @@ export class AchievementsComponent implements OnInit {
   ): CategoryProgress[] {
     // Group achievements by category
     const categoryGroups = new Map<string, Achievement[]>();
-    
-    allAchievements.forEach(achievement => {
+
+    allAchievements.forEach((achievement) => {
       const categoryName = this.getCategoryName(achievement);
       // Skip Legacy and Feats of Strength for parent categories display
       if (categoryName === 'Legacy' || categoryName === 'Feats of Strength') {
@@ -358,7 +359,7 @@ export class AchievementsComponent implements OnInit {
         completed: progress.completed,
         total: progress.total,
         percentage: progress.percentage,
-        elementId: this.sanitizeId(name)
+        elementId: this.sanitizeId(name),
       };
     });
   }
@@ -369,9 +370,11 @@ export class AchievementsComponent implements OnInit {
   ) {
     // Calculate overall directly from all achievements (excluding Legacy and Feats)
     const overall = this.achievementProgressService.calculateProgress(
-      allAchievements.filter(a => {
+      allAchievements.filter((a) => {
         const categoryName = this.getCategoryName(a);
-        return categoryName !== 'Legacy' && categoryName !== 'Feats of Strength';
+        return (
+          categoryName !== 'Legacy' && categoryName !== 'Feats of Strength'
+        );
       }),
       completedMap,
       undefined,
@@ -380,14 +383,16 @@ export class AchievementsComponent implements OnInit {
 
     // Calculate Legacy and Feats separately
     const legacy = this.achievementProgressService.calculateProgress(
-      allAchievements.filter(a => this.getCategoryName(a) === 'Legacy'),
+      allAchievements.filter((a) => this.getCategoryName(a) === 'Legacy'),
       completedMap,
       undefined,
       true
     );
 
     const feats = this.achievementProgressService.calculateProgress(
-      allAchievements.filter(a => this.getCategoryName(a) === 'Feats of Strength'),
+      allAchievements.filter(
+        (a) => this.getCategoryName(a) === 'Feats of Strength'
+      ),
       completedMap,
       undefined,
       true
@@ -396,7 +401,7 @@ export class AchievementsComponent implements OnInit {
     return {
       overall,
       legacy,
-      feats
+      feats,
     };
   }
 

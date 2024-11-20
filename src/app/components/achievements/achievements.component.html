@@ -1,4 +1,9 @@
-<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden relative">
+  <!-- Add loading overlay without spinner -->
+  @if (!achievementStats()) {
+    <app-loading [showSpinner]="false" />
+  }
+  
   <div class="p-4 overflow-y-auto h-full">
     <!-- Main Achievement Circles -->
     <div class="bg-custom-card-bg rounded-lg shadow-lg p-6 mb-6">
