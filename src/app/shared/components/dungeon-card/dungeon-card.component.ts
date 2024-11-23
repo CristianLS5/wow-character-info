@@ -37,4 +37,8 @@ export class DungeonCardComponent implements OnInit {
     const { r, g, b } = this.run.mythic_rating.color;
     return `rgb(${r}, ${g}, ${b})`;
   }
+
+  getMediaUrl(): string {
+    return this.run.dungeon.media || '';
+  }
 }

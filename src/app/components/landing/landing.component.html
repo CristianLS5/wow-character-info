@@ -1,8 +1,39 @@
-<div class="flex flex-col items-center justify-center h-screen bg-custom-bg text-custom-text">
+<div class="flex flex-col items-center justify-center min-h-screen bg-custom-bg text-custom-text">
     <h1 class="text-4xl font-bold mb-8">Welcome to WoW Character Viewer</h1>
+    <div class="carousel w-[800px] h-[450px] mb-8 rounded-lg overflow-hidden">
+        <div id="slide1" class="carousel-item relative w-full">
+            <img src="assets/images/character.png" class="w-full h-full object-contain bg-custom-card-bg" />
+            <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+                <button (click)="prevSlide($event)" class="btn btn-circle">❮</button>
+                <button (click)="nextSlide($event)" class="btn btn-circle">❯</button>
+            </div>
+        </div> 
+        <div id="slide2" class="carousel-item relative w-full">
+            <img src="assets/images/achievements.png" class="w-full object-cover" />
+            <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+                <button (click)="prevSlide($event)" class="btn btn-circle">❮</button>
+                <button (click)="nextSlide($event)" class="btn btn-circle">❯</button>
+            </div>
+        </div> 
+        <div id="slide3" class="carousel-item relative w-full">
+            <img src="assets/images/collections.png" class="w-full object-cover" />
+            <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+                <button (click)="prevSlide($event)" class="btn btn-circle">❮</button>
+                <button (click)="nextSlide($event)" class="btn btn-circle">❯</button>
+            </div>
+        </div>
+        <div id="slide4" class="carousel-item relative w-full">
+            <img src="assets/images/reputations.png" class="w-full object-cover" />
+            <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+                <button (click)="prevSlide($event)" class="btn btn-circle">❮</button>
+                <button (click)="nextSlide($event)" class="btn btn-circle">❯</button>
+            </div>
+        </div>
+    </div>
     <p class="text-xl mb-8">Login to Battle.net to have a full experience</p>
     <button (click)="login()"
-        class="px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out">
+        class="btn btn-primary normal-case gap-2 bg-[#261893] hover:bg-[#32d8ec] border-none">
+        <img src="assets/icons/battlenet.svg" alt="Battle.net" class="w-6 h-6 invert" />
         Login with Battle.net
     </button>
 </div>

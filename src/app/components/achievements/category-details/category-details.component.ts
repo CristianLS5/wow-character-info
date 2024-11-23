@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AchievementService } from '../../../services/achievement.service';
 import { Achievement } from '../../../interfaces/achievement.interface';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, finalize } from 'rxjs';
 import { CategoryViewComponent } from '../../../shared/components/category-view/category-view.component';
 import { CategoryViewData } from '../../../interfaces/category-view.interface';
 import { CharacterService } from '../../../services/character.service';
@@ -26,6 +26,8 @@ export class CategoryDetailsComponent implements OnInit {
   protected achievements = signal<Achievement[]>([]);
   protected completedAchievements = signal<Map<number, number>>(new Map());
   protected categoryData!: CategoryViewData;
+  private isLoading = signal(true);
+  private error = signal<string | null>(null);
 
   private getCategoryName(achievement: Achievement): string {
     return (
@@ -37,7 +39,8 @@ export class CategoryDetailsComponent implements OnInit {
   ngOnInit() {
     const categoryName = this.route.snapshot.paramMap.get('category');
     if (!categoryName) {
-      console.error('No category specified');
+      this.error.set('No category specified');
+      this.isLoading.set(false);
       return;
     }
 
@@ -47,6 +50,8 @@ export class CategoryDetailsComponent implements OnInit {
       achievements: this.achievements,
       completedAchievements: this.completedAchievements,
       filterPredicate: config.filterPredicate,
+      isLoading: this.isLoading(),
+      error: this.error()
     };
 
     const characterInfo = this.characterService.getCharacterInfo();
@@ -85,9 +90,21 @@ export class CategoryDetailsComponent implements OnInit {
           this.completedAchievements.set(completedMap);
 
           return filteredAchievements;
+        }),
+        finalize(() => {
+          this.isLoading.set(false);
         })
       )
-      .subscribe();
+      .subscribe({
+        next: (achievements) => {
+          // ... existing code ...
+        },
+        error: (err) => {
+          console.error('Error loading achievements:', err);
+          this.error.set('Failed to load achievements');
+          this.isLoading.set(false);
+        }
+      });
   }
 
   private getCategoryConfig(category: string): CategoryConfig {

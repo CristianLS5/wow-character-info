@@ -1,5 +1,6 @@
 import { Component, Input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { LoadingComponent } from '../loading/loading.component';
 import { Achievement } from '../../../interfaces/achievement.interface';
 import {
   CategoryViewData,
@@ -12,7 +13,7 @@ import { AchievementProgressService } from '../../../services/achievement-progre
 @Component({
   selector: 'app-category-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingComponent],
   templateUrl: './category-view.component.html',
 })
 export class CategoryViewComponent {

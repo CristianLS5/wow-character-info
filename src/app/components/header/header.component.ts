@@ -74,14 +74,13 @@ export class HeaderComponent {
   }
 
   onLogout() {
+    this.characterService.clearCharacterData();
     this.authService.logout().subscribe({
       next: () => {
-        this.characterService.clearCharacterData(); // Make sure to implement this method in CharacterService
-        this.router.navigate(['/']);
+        this.router.navigate(['/'], { replaceUrl: true });
       },
       error: (error) => {
         console.error('Logout failed:', error);
-        // Handle logout error (e.g., show an error message to the user)
       },
     });
   }

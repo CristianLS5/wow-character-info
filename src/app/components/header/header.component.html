@@ -39,9 +39,7 @@
                 </li>
                 <li class="dropdown-item pt-2">
                   <button (click)="onLogout()" 
-                          class="w-full text-center px-4 py-2 bg-red-500 text-white rounded-md 
-                                 hover:bg-red-600 transition-all duration-300 ease-in-out 
-                                 transform hover:scale-105">
+                          class="btn btn-sm w-full normal-case btn-outline text-custom-text hover:bg-red-700 hover:border-red-700">
                     Logout
                   </button>
                 </li>
@@ -53,17 +51,17 @@
     </div>
     <div class="flex items-center space-x-2">
       <input type="text" [ngModel]="realm()" (ngModelChange)="onRealmChange($event)" placeholder="Realm"
-        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right">
+        class="px-3 py-2 h-10 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right">
       <input type="text" [ngModel]="characterName()" (ngModelChange)="onCharacterNameChange($event)"
         placeholder="Character Name"
-        class="px-3 py-2 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-left">
+        class="px-3 py-2 h-10 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-left">
       <button (click)="onFetchCharacter()"
-        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out animate-bounce">
-        Fetch
+        class="btn btn-primary h-10 normal-case bg-[#148eff] hover:bg-[#0070dd] border-none">
+        <img src="assets/icons/search-outline.svg" alt="Search" class="w-5 h-5 invert" />
       </button>
       @if (!characterProfile()) {
         <button (click)="onLogout()"
-          class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300 ease-in-out animate-pulse">
+          class="btn h-10 normal-case btn-outline text-custom-text hover:bg-red-700 hover:border-red-700">
           Logout
         </button>
       }

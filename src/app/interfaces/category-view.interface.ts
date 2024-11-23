@@ -6,6 +6,8 @@ export interface CategoryViewData {
   achievements: Signal<Achievement[]>;
   completedAchievements: Signal<Map<number, number>>;
   filterPredicate: (achievement: Achievement) => boolean;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 export interface CategoryStats {

@@ -1,9 +1,9 @@
 <div class="relative bg-custom-card-bg rounded-lg overflow-hidden h-[200px] group 
             shadow-md hover:shadow-glow transition-all duration-300">
     <!-- Background Image -->
-    @if (run.media) {
+    @if (getMediaUrl()) {
     <div class="absolute inset-0 z-0">
-        <img [src]="run.media" 
+        <img [src]="getMediaUrl()" 
              [alt]="run.dungeon.name" 
              class="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity">
     </div>
