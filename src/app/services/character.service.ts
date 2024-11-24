@@ -1,0 +1,148 @@
+import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { catchError, finalize, tap } from 'rxjs/operators';
+import { forkJoin, Observable, throwError } from 'rxjs';
+import { CharacterEquipment } from '../interfaces/character-equipment.interface';
+import { CharacterMedia } from '../interfaces/character-media.interface';
+import { CharacterInfo } from '../interfaces/character.interface';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CharacterService {
+  private apiUrl = 'http://localhost:3000/api';
+
+  private loadingSignal = signal<boolean>(false);
+  private characterEquipmentSignal = signal<CharacterEquipment | null>(null);
+  private characterMediaSignal = signal<CharacterMedia | null>(null);
+  private characterProfileSignal = signal<CharacterInfo | null>(null);
+  private errorSignal = signal<string | null>(null);
+
+  loading = computed(() => this.loadingSignal());
+  error = computed(() => this.errorSignal());
+
+  constructor(private http: HttpClient) {}
+
+  fetchAllCharacterData(
+    realm: string,
+    characterName: string
+  ): Observable<[CharacterEquipment, CharacterMedia, CharacterInfo]> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    return forkJoin([
+      this.getCharacterEquipment(realm, characterName),
+      this.getCharacterMedia(realm, characterName),
+      this.getCharacterProfile(realm, characterName),
+    ]).pipe(
+      finalize(() => {
+        this.loadingSignal.set(false);
+      })
+    );
+  }
+
+  getCharacterEquipment(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterEquipment> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/equipment`;
+    return this.http.get<CharacterEquipment>(url).pipe(
+      tap((data) => {
+        console.log('Received character equipment data:', data);
+
+        this.characterEquipmentSignal.set(data);
+      }),
+      catchError(this.handleError('character equipment'))
+    );
+  }
+
+  getCharacterMedia(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterMedia> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/media`;
+    return this.http.get<CharacterMedia>(url).pipe(
+      tap((data) => {
+        console.log('Received character media data:', data);
+        this.characterMediaSignal.set(data);
+      }),
+      catchError(this.handleError('character media'))
+    );
+  }
+
+  getCharacterProfile(
+    realm: string,
+    characterName: string
+  ): Observable<CharacterInfo> {
+    const url = `${this.apiUrl}/character/${realm}/${characterName}/profile`;
+    return this.http.get<CharacterInfo>(url).pipe(
+      tap((data) => {
+        console.log('Character profile data:', data);
+        this.characterProfileSignal.set(data);
+      }),
+      catchError(this.handleError('character profile'))
+    );
+  }
+
+  private handleError(operation: string) {
+    return (error: HttpErrorResponse): Observable<never> => {
+      const errorMessage = `Error fetching ${operation}: ${error.message}`;
+      console.error(errorMessage, error);
+      this.errorSignal.set(errorMessage);
+      return throwError(() => new Error(errorMessage));
+    };
+  }
+
+  get characterEquipment() {
+    return this.characterEquipmentSignal.asReadonly();
+  }
+
+  get characterMedia() {
+    return this.characterMediaSignal.asReadonly();
+  }
+
+  get characterProfile() {
+    return this.characterProfileSignal.asReadonly();
+  }
+
+  get isDataAvailable() {
+    return computed(
+      () =>
+        !!this.characterEquipmentSignal() &&
+        !!this.characterMediaSignal() &&
+        !!this.characterProfileSignal()
+    );
+  }
+
+  clearCharacterData() {
+    this.characterProfileSignal.set(null);
+    this.characterEquipmentSignal.set(null);
+    this.characterMediaSignal.set(null);
+    // Clear any other relevant data
+  }
+
+  getCharacterInfo(): CharacterInfo | null {
+    const profile = this.characterProfileSignal();
+    if (profile) {
+      return {
+        name: profile.name,
+        realmSlug: profile.realm.slug,
+        characterName: profile.name,
+        gender: profile.gender,
+        faction: profile.faction,
+        race: profile.race,
+        character_class: profile.character_class,
+        active_spec: profile.active_spec,
+        realm: profile.realm,
+        guild: profile.guild,
+        level: profile.level,
+        experience: profile.experience,
+        achievement_points: profile.achievement_points,
+        last_login_timestamp: profile.last_login_timestamp,
+        average_item_level: profile.average_item_level,
+        equipped_item_level: profile.equipped_item_level,
+      };
+    }
+    return null;
+  }
+}

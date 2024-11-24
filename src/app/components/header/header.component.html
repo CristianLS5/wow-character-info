@@ -1,0 +1,75 @@
+<header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down relative z-50">
+  <div class="container mx-auto flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <h1 class="text-2xl font-bold animate-pulse">{{ getTitle() }}</h1>
+      @if (characterProfile()) {
+        <div class="relative">
+          <button (click)="toggleDropdown($event)" class="focus:outline-none group">
+            <img [src]="getAvatarUrl()" alt="Character Avatar" 
+                 class="w-12 h-12 rounded-full transition-all duration-300 ease-in-out 
+                        transform group-hover:scale-110 group-hover:shadow-glow">
+          </button>
+          @if (isDropdownOpen()) {
+            <div [@dropdownAnimation] class="absolute left-0 top-12 mt-2 w-64 bg-custom-card-bg rounded-md shadow-lg z-50">
+              <ul class="py-2 px-4 space-y-2">
+                <li class="dropdown-item">
+                  <span [style.color]="getClassColor(characterProfile()!.character_class.name)" class="block text-lg font-bold">
+                    {{ characterProfile()?.name }}
+                  </span>
+                </li>
+                <li class="dropdown-item">
+                  <span class="block text-sm">
+                    {{ characterProfile()?.race?.name }} - 
+                    {{ characterProfile()?.active_spec?.name }} {{ characterProfile()?.character_class?.name }}
+                  </span>
+                </li>
+                <li class="dropdown-item">
+                  <span class="block text-sm">
+                    &lt;{{ characterProfile()?.guild?.name }}&gt; {{ characterProfile()?.realm?.name }}
+                  </span>
+                </li>
+                <li class="dropdown-item flex items-center gap-2">
+                  <img src="assets/icons/achievement.svg" alt="Achievements" class="w-4 h-4">
+                  <span class="text-sm">{{ characterProfile()?.achievement_points }} points</span>
+                </li>
+                <li class="dropdown-item">
+                  <span class="block text-sm">
+                    Level: {{ characterProfile()?.level }} - iLvl: {{ characterProfile()?.average_item_level }}
+                  </span>
+                </li>
+                <li class="dropdown-item pt-2">
+                  <button (click)="onLogout()" 
+                          class="btn btn-sm w-full normal-case btn-outline text-custom-text hover:bg-red-700 hover:border-red-700">
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </div>
+          }
+        </div>
+      }
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="text" [ngModel]="realm()" (ngModelChange)="onRealmChange($event)" placeholder="Realm"
+        class="px-3 py-2 h-10 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-right">
+      <input type="text" [ngModel]="characterName()" (ngModelChange)="onCharacterNameChange($event)"
+        placeholder="Character Name"
+        class="px-3 py-2 h-10 bg-custom-bg text-custom-text rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out animate-fade-in-left">
+      <button (click)="onFetchCharacter()"
+        class="btn btn-primary h-10 normal-case bg-[#148eff] hover:bg-[#0070dd] border-none">
+        <img src="assets/icons/search-outline.svg" alt="Search" class="w-5 h-5 invert" />
+      </button>
+      @if (!characterProfile()) {
+        <button (click)="onLogout()"
+          class="btn h-10 normal-case btn-outline text-custom-text hover:bg-red-700 hover:border-red-700">
+          Logout
+        </button>
+      }
+    </div>
+  </div>
+  @if (errorMessage()) {
+    <div class="mt-4 text-red-500 animate-fade-in">
+      {{ errorMessage() }}
+    </div>
+  }
+</header>

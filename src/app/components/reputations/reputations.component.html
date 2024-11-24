@@ -1,0 +1,67 @@
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+    <div class="p-4 overflow-y-auto h-full">
+        @if (isLoading) {
+        <div class="flex justify-center items-center min-h-[200px]">
+            <app-loading />
+        </div>
+        } @else if (error) {
+        <div class="text-red-500 text-center p-4 bg-red-100/10 rounded-lg animate-fade-in-right">
+            <p class="font-semibold">Error</p>
+            <p>{{ error }}</p>
+        </div>
+        } @else {
+        @for (expansion of expansions; track expansion) {
+        @if (reputationsMap[expansion] && reputationsMap[expansion].length > 0) {
+        <div class="mb-8 animate-fade-in-right">
+            <h2 class="text-2xl font-bold mb-4 text-center">{{ expansion }}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                @for (reputation of reputationsMap[expansion]; track reputation.faction.id) {
+                <div class="bg-custom-card-bg rounded-lg p-4 shadow-md hover:shadow-glow transition-all duration-300 cursor-pointer animate-fade-in-right"
+                    [style.animation-delay]="$index * 50 + 'ms'">
+                    <div class="flex items-center gap-4">
+                        <!-- Fixed Faction Name with Tooltip -->
+                        <div class="tooltip tooltip-bottom" attr.data-tip="{{ reputation.faction.name }}">
+                            <div
+                                class="w-32 font-semibold truncate hover:text-[#3b82f6] transition-colors duration-300">
+                                {{ reputation.faction.name }}
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar Container -->
+                        <div class="flex-1 relative">
+                            <div class="w-full bg-gray-700 rounded-full h-6">
+                                <div class="h-6 rounded-full transition-all duration-300" [class]="{
+                                                        'bg-green-500': reputation.standing.value === reputation.standing.max && !reputation.paragon,
+                                                        'bg-blue-500': reputation.standing.value !== reputation.standing.max && !reputation.paragon,
+                                                        'bg-violet-500': reputation.paragon
+                                                    }"
+                                    [style.width.%]="(reputation.standing.value / reputation.standing.max) * 100">
+                                </div>
+                                <!-- Progress Text -->
+                                <div
+                                    class="absolute inset-0 flex items-center justify-center text-sm text-white font-medium">
+                                    @if (reputation.paragon) {
+                                    PARAGON
+                                    } @else if (reputation.standing.value === reputation.standing.max) {
+                                    MAX
+                                    } @else {
+                                    {{ reputation.standing.value }} / {{ reputation.standing.max }}
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Standing Name -->
+                        <div class="w-24 text-right font-medium">
+                            {{ reputation.standing.name }}
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+        }
+        }
+    </div>
+</div>

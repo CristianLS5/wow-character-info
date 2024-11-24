@@ -1,0 +1,361 @@
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+    <div class="p-4 overflow-y-auto h-full">
+        <!-- Tabs -->
+        <div class="flex justify-center gap-8 mb-4 border-b border-custom-card-bg">
+            <!-- Mount tab button -->
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'mounts'
+                        ? 'text-[#4287f5] font-bold' 
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('mounts')">
+                <span>Mounts</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'mounts'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'pets'
+                        ? 'text-[#4287f5] font-bold'
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('pets')">
+                <span>Pets</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'pets'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'toys'
+                        ? 'text-[#4287f5] font-bold'
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('toys')">
+                <span>Toys</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'toys'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
+            <!-- Add transmog tab button -->
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'transmogs'
+                        ? 'text-[#4287f5] font-bold'
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('transmogs')">
+                <span>Transmogs</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'transmogs'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
+            <!-- Add heirlooms tab button -->
+            <button 
+                class="px-8 py-3 text-lg relative transition-all duration-300"
+                [ngClass]="[
+                    activeTab === 'heirlooms'
+                        ? 'text-[#4287f5] font-bold'
+                        : 'text-white/70 hover:text-white'
+                ]"
+                (click)="switchTab('heirlooms')">
+                <span>Heirlooms</span>
+                <div class="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 transition-transform duration-300"
+                     [ngClass]="[
+                         activeTab === 'heirlooms'
+                             ? 'scale-x-100 bg-[#4287f5]'
+                             : 'bg-white'
+                     ]"></div>
+            </button>
+        </div>
+
+        <!-- Search, Filter, and Pagination Section -->
+        <div class="mb-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in-2">
+            <!-- Left side: Search, Filter, and Count -->
+            <div class="flex flex-row gap-4 items-center">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+                        placeholder="Search {{ activeTab }}..."
+                        class="input input-bordered w-full max-w-xs bg-custom-card-bg text-custom-text border-custom-text focus:border-white focus:ring-2 focus:ring-white transition-all duration-300 ease-in-out pl-10">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 icon-[mdi--magnify] text-custom-text"></span>
+                </div>
+                
+                <!-- Filter -->
+                <div class="dropdown dropdown-hover">
+                    <label tabindex="0" class="btn bg-custom-card-bg text-custom-text hover:bg-custom-bg">
+                        {{ selectedFilter }}
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-custom-card-bg rounded-box w-52">
+                        @for (option of filterOptions; track option) {
+                        <li><a (click)="onFilterChange(option)" [class.active]="selectedFilter === option">{{ option }}</a></li>
+                        }
+                    </ul>
+                </div>
+
+                <!-- Count -->
+                <div class="flex items-center">
+                    <span class="text-sm font-semibold bg-custom-card-bg px-3 py-2 rounded-lg">
+                        Total: {{ totalItems }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right side: Top Pagination -->
+            <div class="join shadow-md">
+                <button class="join-item btn btn-sm bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300"
+                    [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+                    «
+                </button>
+
+                @for (page of getVisiblePageNumbers(); track page) {
+                <button class="join-item btn btn-sm bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300"
+                    [class.bg-custom-bg]="currentPage === page" [class.shadow-glow]="currentPage === page"
+                    (click)="changePage(page)">
+                    {{ page }}
+                </button>
+                }
+
+                <button class="join-item btn btn-sm bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300"
+                    [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+                    »
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        @if (isLoading) {
+            <div class="flex justify-center items-center h-[calc(100vh-250px)]">
+                <app-loading />
+            </div>
+        } @else {
+            <!-- Mount/Pet grid content here -->
+            @if (activeTab === 'mounts') {
+            <!-- Existing mounts grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                @for (mount of paginatedMounts; track mount.id; let i = $index) {
+                <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                    [class.not-collected]="!mount.isCollected"
+                    [class.cursor-pointer]="mount.itemId || mount.spellId"
+                    [class.cursor-default]="!mount.itemId && !mount.spellId"
+                    [class.hover:brightness-110]="mount.itemId || mount.spellId"
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openMountWowheadLink(mount)">
+                    <div class="relative h-full">
+                        @if (mount.creatureMedia) {
+                        <img [src]="mount.creatureMedia" [alt]="mount.name" class="w-full h-full object-cover">
+                        }
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
+                            <h3 class="text-sm font-semibold truncate">
+                                {{ mount.name }}
+                                @if (mount.itemId || mount.spellId) {
+                                    <span class="icon-[mdi--link-variant] ml-1 text-xs opacity-75"></span>
+                                }
+                            </h3>
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                            <h3 class="text-lg font-semibold mb-2">{{ mount.name }}</h3>
+                            <p class="text-sm mb-2"><strong>Description:</strong> {{ mount.description }}</p>
+                            <p class="text-sm mb-2"><strong>Source:</strong> {{ mount.source.name }}</p>
+                            @if (mount.faction) {
+                            <p class="text-sm mb-2"><strong>Faction:</strong> {{ mount.faction.name }}</p>
+                            }
+                            <p class="text-sm mb-2"><strong>Status:</strong> {{ mount.isCollected ? 'Collected' : 'Not
+                                Collected' }}</p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else if (activeTab === 'pets') {
+            <!-- Pets grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                @for (pet of paginatedPets; track pet.id; let i = $index) {
+                <div class="mount-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden cursor-pointer"
+                    [class.not-collected]="!pet.isCollected"
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openPetWowheadLink(pet?.creature?.id)">
+                    <div class="relative h-full">
+                        <img [src]="pet.displayMedia" 
+                             [alt]="pet.name" 
+                             [class.pet-icon]="!pet.isCollected"
+                             class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-center">
+                            <h3 class="text-sm font-semibold truncate">{{ pet.name }}</h3>
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-black bg-opacity-80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                            <!-- Name -->
+                            <h3 class="text-lg font-semibold mb-2">{{ pet.name }}</h3>
+
+                            <!-- Description -->
+                            <p class="text-sm mb-2"><strong>Description:</strong> {{ pet.description }}</p>
+
+                            <!-- Pet Type with Icon -->
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="text-sm"><strong>Type:</strong></span>
+                                <img [src]="getPetTypeIcon(pet.battle_pet_type.id)" [alt]="pet.battle_pet_type.name"
+                                    class="w-6 h-6">
+                            </div>
+
+                            <!-- Source -->
+                            <p class="text-sm mb-2"><strong>Source:</strong> {{ pet.source?.name }}</p>
+
+                            <!-- Faction Restriction -->
+                            @if (pet.is_alliance_only || pet.is_horde_only) {
+                            <p class="text-sm mb-2" [ngClass]="{
+                                            'text-blue-400': pet.is_alliance_only,
+                                            'text-red-500': pet.is_horde_only
+                                        }">
+                                {{ pet.is_alliance_only ? 'Alliance Only' : 'Horde Only' }}
+                            </p>
+                            }
+
+                            <!-- Add Status -->
+                            <p class="text-sm mb-2">
+                                <strong>Status:</strong> {{ pet.isCollected ? 'Collected' : 'Not Collected' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else if (activeTab === 'toys') {
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 animate-fade-in-3">
+                @for (toy of paginatedToys; track toy.id; let i = $index) {
+                <div class="toy-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden cursor-pointer"
+                    [class.not-collected]="!toy.isCollected"
+                    [style.animation-delay]="i * 0.1 + 's'"
+                    (click)="openToyWowheadLink(toy.item.id)">
+                    <div class="relative h-full">
+                        <img [src]="toy.displayMedia" 
+                             [alt]="toy.name" 
+                             [class.toy-icon]="!toy.isCollected"
+                             class="w-full h-full object-contain p-1">
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-center">
+                            <h3 class="text-xs font-semibold truncate">{{ toy.name }}</h3>
+                        </div>
+                        <!-- Hover overlay -->
+                        <div class="absolute inset-0 bg-black bg-opacity-90 text-white p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                            <h3 class="text-sm font-semibold mb-1">{{ toy.name }}</h3>
+                            <p class="text-xs mb-1"><strong>Source:</strong> {{ toy.source.name }}</p>
+                            <p class="text-xs mb-1"><strong>Source Description:</strong> {{ toy.description }}</p>
+                            @if (toy.is_alliance_only || toy.is_horde_only) {
+                            <p class="text-xs mb-1" [ngClass]="{
+                                'text-blue-400': toy.is_alliance_only,
+                                'text-red-500': toy.is_horde_only
+                            }">
+                                {{ toy.is_alliance_only ? 'Alliance Only' : 'Horde Only' }}
+                            </p>
+                            }
+                            <p class="text-xs">
+                                <strong>Status:</strong> {{ toy.isCollected ? 'Collected' : 'Not Collected' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else if (activeTab === 'transmogs') {
+            <!-- Transmogs grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in-3">
+                @for (set of paginatedTransmogs; track set.setId; let i = $index) {
+                <div class="transmog-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden"
+                    [class.not-collected]="!set.isCollected"
+                    [style.animation-delay]="i * 0.1 + 's'">
+                    <div class="relative p-4">
+                        <!-- Set Name -->
+                        <h3 class="text-lg font-semibold mb-4 text-center truncate">{{ set.name }}</h3>
+
+                        <!-- Grid of appearances -->
+                        <div class="grid grid-cols-1 gap-2">
+                            @for (appearance of set.appearances; track appearance.id) {
+                            <a [href]="getWowheadUrl(appearance.item.id)" 
+                               class="flex items-center gap-2 p-2 hover:bg-custom-bg rounded-md transition-all duration-300 cursor-pointer"
+                               target="_blank" 
+                               rel="noopener noreferrer">
+                                <img [src]="appearance.icon" 
+                                     [alt]="appearance.item.name"
+                                     class="w-10 h-10 rounded-md">
+                                <span class="text-sm font-semibold">{{ appearance.item.name }}</span>
+                            </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+} @else if (activeTab === 'heirlooms') {
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 animate-fade-in-3">
+    @for (heirloom of paginatedHeirlooms; track heirloom.id; let i = $index) {
+    <div class="heirloom-card bg-custom-card-bg rounded-lg shadow-md transition-all duration-300 ease-in-out hover:shadow-glow animate-accordion-x group overflow-hidden cursor-pointer"
+        [class.not-collected]="!heirloom.isCollected"
+        [style.animation-delay]="i * 0.1 + 's'" 
+        (click)="openHeirloomWowheadLink(heirloom.item.id)">
+        <div class="relative h-full">
+            <img [src]="heirloom.displayMedia" 
+                 [alt]="heirloom.item.name" 
+                 [class.heirloom-icon]="!heirloom.isCollected"
+                 class="w-full h-full object-contain p-1">
+            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-center">
+                <h3 class="text-xs font-semibold truncate">{{ heirloom.item.name }}</h3>
+            </div>
+            <!-- Hover overlay -->
+            <div class="absolute inset-0 bg-black bg-opacity-90 text-white p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out overflow-y-auto">
+                <h3 class="text-sm font-semibold mb-1">{{ heirloom.item.name }}</h3>
+                <p class="text-xs mb-1"><strong>Source:</strong> {{ heirloom.source.name }}</p>
+                <p class="text-xs mb-1"><strong>Source Description:</strong> {{ heirloom.source_description }}</p>
+                <p class="text-xs">
+                    <strong>Status:</strong> {{ heirloom.isCollected ? 'Collected' : 'Not Collected' }}
+                </p>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+            }
+
+            <!-- Bottom Pagination -->
+            <div class="mt-4 flex justify-center">
+                <div class="join shadow-md">
+                    <button class="join-item btn bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300"
+                        [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+                        «
+                    </button>
+
+                    @for (page of getVisiblePageNumbers(); track page) {
+                    <button class="join-item btn bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300"
+                        [class.bg-custom-bg]="currentPage === page" [class.shadow-glow]="currentPage === page"
+                        (click)="changePage(page)">
+                        {{ page }}
+                    </button>
+                    }
+
+                    <button class="join-item btn bg-custom-card-bg text-custom-text border-white hover:bg-custom-bg hover:shadow-glow transition-all duration-300"
+                        [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+                        »
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>

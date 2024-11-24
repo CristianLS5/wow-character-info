@@ -20,20 +20,21 @@
             "outputPath": "dist/wow-character-info",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "sass",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/app/assets",
+                "output": "assets/"
               }
             ],
-            "styles": [
-              "src/styles.sass"
-            ],
+            "styles": ["src/styles.sass"],
             "scripts": []
           },
           "configurations": {
@@ -70,7 +71,10 @@
               "buildTarget": "wow-character-info:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "src/proxy.conf.json"
+          }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
@@ -78,21 +82,21 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "sass",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/app/assets",
+                "output": "assets/"
               }
             ],
-            "styles": [
-              "src/styles.sass"
-            ],
+            "styles": ["src/styles.sass"],
             "scripts": []
           }
         }

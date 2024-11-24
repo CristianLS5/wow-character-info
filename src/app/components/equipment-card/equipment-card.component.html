@@ -1,0 +1,35 @@
+<div class="relative p-2 rounded-lg shadow bg-transparent">
+  <div class="flex items-center" [ngClass]="{'flex-row-reverse': isRightColumn}">
+    <div class="w-16 h-16 flex-shrink-0 relative" [ngClass]="{'mr-4': !isRightColumn, 'ml-4': isRightColumn}">
+      <a [href]="getWowheadUrl()" target="_blank" rel="noopener noreferrer" class="block relative group">
+        @if (item.iconUrl) {
+          <div class="relative overflow-hidden rounded">
+            <img [src]="item.iconUrl" [alt]="item.name" 
+                 class="w-full h-full object-cover transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:shadow-lg"
+                 (error)="onImageError($event)">
+            <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+          </div>
+        } @else {
+          <span class="text-xs text-custom-text">No icon</span>
+        }
+      </a>
+      @if (hasTransmog()) {
+        <div class="absolute top-0 mt-1" [ngClass]="isRightColumn ? 'right-0 mr-1' : 'left-0 ml-1'">
+          <a [href]="getTransmogWowheadUrl()" target="_blank" rel="noopener noreferrer" class="group">
+            <span class="icon-[tabler--join-straight] w-6 h-6 text-[#c82bb7] fill-icon transition-all duration-300 ease-in-out group-hover:text-custom-highlight" 
+                  [ngClass]="[getTransmogIconRotation(), getTransmogIconAnimation()]"></span>
+          </a>
+        </div>
+      }
+    </div>
+    <div [ngClass]="{'text-left': !isRightColumn, 'text-right': isRightColumn}">
+      <span class="text-sm text-custom-text">{{ item.slot.name }}</span>
+      <br>
+      <span class="text-base font-medium text-custom-text">{{ item.name }}</span>
+      <br>
+      <span class="text-sm text-custom-text">
+        {{ item.level.display_string }}
+      </span>
+    </div>
+  </div>
+</div>

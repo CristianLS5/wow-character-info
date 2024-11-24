@@ -1,0 +1,126 @@
+<div class="h-[calc(100vh-112px)] bg-custom-bg text-custom-text overflow-hidden">
+    @if (data.isLoading) {
+        <div class="flex justify-center items-center min-h-[200px]">
+            <app-loading />
+        </div>
+    } @else if (data.error) {
+        <div class="text-red-500 text-center p-4 bg-red-100/10 rounded-lg animate-fade-in-right">
+            <p class="font-semibold">Error</p>
+            <p>{{ data.error }}</p>
+        </div>
+    } @else {
+        <div class="bg-custom-card-bg text-custom-text shadow-md animate-fade-in-right">
+            <div class="container mx-auto">
+                <div class="flex justify-center items-center space-x-2 p-2">
+                    <h1 class="text-lg font-bold">{{ data.title }}</h1>
+                    <span class="text-sm opacity-70">{{ totalProgress() }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 overflow-y-auto h-[calc(100vh-160px)]">
+            @for (category of categories(); track category.name) {
+            <div class="collapse collapse-arrow bg-custom-card-bg mb-4 hover:bg-opacity-80 transition-all duration-300 animate-fade-in-right"
+                 [style.animation-delay]="$index * 50 + 'ms'">
+                <input type="checkbox" class="peer" />
+                <div class="collapse-title text-xl font-medium">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-2xl font-bold">{{ category.name }}</h2>
+                            <span class="text-sm opacity-70">
+                                {{ getTotalCategoryProgress(category.name) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse-content">
+                    <div class="flex justify-end mb-4">
+                        <select class="select select-sm bg-custom-bg" (change)="filterAchievements($event, category.name)">
+                            <option value="all">All</option>
+                            <option value="collected">Collected</option>
+                            <option value="uncollected">Not Collected</option>
+                        </select>
+                    </div>
+
+                    @for (achievement of getFilteredMainAchievements(category.name); track achievement.achievementId) {
+                    <div class="mb-4">
+                        <div class="flex items-center p-4 bg-custom-bg rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300"
+                            [class.opacity-40]="!isCollected()(achievement)">
+                            <div class="flex items-center flex-grow"
+                                 [class.cursor-pointer]="!hasChain(achievement)"
+                                 (click)="!hasChain(achievement) ? openWowheadLink(achievement.data.id) : null">
+                                <img [src]="achievement.data.media.assets[0].value" alt="{{ achievement.data.name }}"
+                                    class="w-16 h-16 mr-4" [class.grayscale]="!isCollected()(achievement)">
+                                <div class="flex-grow">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="text-lg font-bold">
+                                            {{ achievement.data.name }}
+                                            @if (getFactionRequirement(achievement)) {
+                                                <span class="text-sm ml-2 italic"
+                                                      [ngClass]="{
+                                                        'text-[#0078FF]': getFactionRequirement(achievement) === 'Alliance Only',
+                                                        'text-[#FF4500]': getFactionRequirement(achievement) === 'Horde Only'
+                                                      }">
+                                                        {{ getFactionRequirement(achievement) }}
+                                                    </span>
+                                            }
+                                        </h3>
+                                        @if (isCollected()(achievement) && !hasChain(achievement)) {
+                                            <span class="text-sm text-gray-400">
+                                                {{ getCompletionDate(achievement.data.id) }}
+                                            </span>
+                                        }
+                                    </div>
+                                    <p class="text-sm">{{ achievement.data.description }}</p>
+                                </div>
+                                @if (hasChain(achievement)) {
+                                    <div class="collapse collapse-arrow min-h-0">
+                                        <input type="checkbox" class="peer" />
+                                        <div class="collapse-title min-h-0 p-0"></div>
+                                        <div class="collapse-content">
+                                            @for (chainAchievement of getChainAchievements(achievement); track chainAchievement.achievementId) {
+                                            <div class="flex items-center mt-2 p-3 bg-custom-card-bg rounded-lg">
+                                                <div class="flex items-center flex-grow cursor-pointer"
+                                                     (click)="openWowheadLink(chainAchievement.data.id)">
+                                                    <img [src]="chainAchievement.data.media.assets[0].value"
+                                                        alt="{{ chainAchievement.data.name }}" 
+                                                        class="w-12 h-12 mr-3"
+                                                        [class.grayscale]="!isCollected()(chainAchievement)">
+                                                    <div class="flex-grow">
+                                                        <div class="flex justify-between items-start">
+                                                            <h4 class="text-md font-semibold">
+                                                                {{ chainAchievement.data.name }}
+                                                                @if (getFactionRequirement(chainAchievement)) {
+                                                                    <span class="text-sm ml-2 italic"
+                                                                          [ngClass]="{
+                                                                            'text-[#0078FF]': getFactionRequirement(chainAchievement) === 'Alliance Only',
+                                                                            'text-[#FF4500]': getFactionRequirement(chainAchievement) === 'Horde Only'
+                                                                          }">
+                                                                        {{ getFactionRequirement(chainAchievement) }}
+                                                                    </span>
+                                                                }
+                                                            </h4>
+                                                            @if (isCollected()(chainAchievement)) {
+                                                                <span class="text-sm text-gray-400">
+                                                                    {{ getCompletionDate(chainAchievement.data.id) }}
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                        <p class="text-xs">{{ chainAchievement.data.description }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    }
+</div>
