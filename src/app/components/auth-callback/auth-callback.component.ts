@@ -7,7 +7,6 @@ import { AuthService } from '../../utils/auth/auth.service';
   standalone: true,
   imports: [],
   templateUrl: './auth-callback.component.html',
-  styleUrl: './auth-callback.component.sass',
 })
 export class AuthCallbackComponent implements OnInit {
   constructor(
@@ -17,21 +16,20 @@ export class AuthCallbackComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    console.log('Auth callback initialized');
+
     this.route.queryParams.subscribe((params) => {
+      console.log('Full query params:', params);
+
       const success = params['success'];
-      const error = params['error'];
+      const sid = params['sid'];
+      const persistentSession = params['persistentSession'] === 'true';
 
-      if (error) {
-        console.error('Authentication error:', error);
-        this.router.navigate(['/']);
-        return;
-      }
-
-      if (success === 'true') {
-        this.authService.handleCallback().subscribe({
-          next: (isAuthenticated) => {
-            if (isAuthenticated) {
-              console.log('Authentication successful');
+      if (success === 'true' && sid) {
+        this.authService.handleAuthCallback(sid, persistentSession).subscribe({
+          next: (result) => {
+            console.log('Auth callback result:', result);
+            if (result.isAuthenticated) {
               this.router.navigate(['/character']);
             } else {
               console.error('Authentication failed');
@@ -39,12 +37,12 @@ export class AuthCallbackComponent implements OnInit {
             }
           },
           error: (error) => {
-            console.error('Authentication error:', error);
+            console.error('Auth callback error:', error);
             this.router.navigate(['/']);
           },
         });
       } else {
-        console.error('Invalid callback parameters');
+        console.error('Missing success or sid parameter');
         this.router.navigate(['/']);
       }
     });

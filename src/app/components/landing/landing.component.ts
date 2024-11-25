@@ -15,11 +15,21 @@ export class LandingComponent implements OnInit, OnDestroy {
   private currentSlide = 1;
   private totalSlides = 4;
   private slideContainer: HTMLElement | null = null;
+  showConsentModal = false;
 
   constructor(private authService: AuthService, private router: Router) {
     effect(() => {
-      if (this.authService.isAuthenticated()) {
-        this.router.navigate(['/character']);
+      if (this.authService.isAuthCheckComplete()) {
+        const isAuthenticated = this.authService.isAuthenticated();
+        console.log('Landing auth check:', {
+          isAuthenticated,
+          hasSessionStorage: !!sessionStorage.getItem('auth_time'),
+          hasLocalStorage: !!localStorage.getItem('auth_state')
+        });
+
+        if (isAuthenticated) {
+          this.router.navigate(['/character']);
+        }
       }
     });
   }
@@ -78,6 +88,20 @@ export class LandingComponent implements OnInit, OnDestroy {
   }
 
   login() {
-    this.authService.login();
+    this.showConsentModal = true;
+  }
+
+  updateConsent(consent: boolean) {
+    // Close modal first
+    this.showConsentModal = false;
+    
+    // Start login process with consent value
+    this.authService.login(consent);
+  }
+
+  private isNewTab(): boolean {
+    // Check if this tab was created after the authentication
+    const authTime = sessionStorage.getItem('auth_time');
+    return !authTime;
   }
 }

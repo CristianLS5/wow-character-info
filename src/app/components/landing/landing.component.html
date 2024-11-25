@@ -30,10 +30,32 @@
             </div>
         </div>
     </div>
-    <p class="text-xl mb-8">Login to Battle.net to have a full experience</p>
     <button (click)="login()"
         class="btn btn-primary normal-case gap-2 bg-[#261893] hover:bg-[#32d8ec] border-none">
         <img src="assets/icons/battlenet.svg" alt="Battle.net" class="w-6 h-6 invert" />
         Login with Battle.net
     </button>
 </div>
+<dialog id="consent_modal" class="modal" [class.modal-open]="showConsentModal">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Session Storage Consent</h3>
+    <p class="py-4">
+      To provide you with a better experience, we need your consent to store session information locally. 
+      This allows you to stay logged in between visits.
+    </p>
+    <p class="py-2 text-sm opacity-70">
+      If you decline, you'll need to log in each time you visit the site.
+    </p>
+    <div class="modal-action">
+      <button class="btn btn-ghost" (click)="updateConsent(false)">
+        Continue without storing session
+      </button>
+      <button class="btn btn-primary" (click)="updateConsent(true)">
+        Accept and continue
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button (click)="showConsentModal = false">close</button>
+  </form>
+</dialog>
