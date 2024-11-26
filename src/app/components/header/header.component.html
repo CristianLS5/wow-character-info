@@ -1,7 +1,9 @@
 <header class="bg-custom-card-bg text-custom-text p-4 shadow-lg animate-fade-in-down relative z-50">
   <div class="container mx-auto flex items-center justify-between">
     <div class="flex items-center space-x-4">
-      <h1 class="text-2xl font-bold animate-pulse">{{ getTitle() }}</h1>
+      <h1 class="text-2xl font-bold animate-pulse tooltip tooltip-bottom" data-tip="WoW Character Viewer">
+        {{ getTitle() }}
+      </h1>
       @if (characterProfile()) {
         <div class="relative">
           <button (click)="toggleDropdown($event)" class="focus:outline-none group">
