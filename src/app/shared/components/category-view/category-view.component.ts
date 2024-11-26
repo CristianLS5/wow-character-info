@@ -180,28 +180,36 @@ export class CategoryViewComponent {
   }
 
   protected getFilteredMainAchievements(categoryName: string): Achievement[] {
-    // First get all achievements for this category
-    let achievements = this.getFilteredAchievements(categoryName);
+    // First filter achievements by category
+    let achievements = this.data
+      .achievements()
+      .filter(achievement => achievement.data.category.name === categoryName)
+      .filter(achievement => !achievement.data.next_achievement);
+    
     achievements = this.deduplicateAchievements(achievements);
     
     const filter = this.filteredAchievements()[categoryName]?.filter() || 'all';
     
+    // For 'all' filter, return all parent achievements
+    if (filter === 'all') {
+      return achievements;
+    }
+
+    // For 'collected' or 'uncollected', only show parents that have matching children
     return achievements.filter(achievement => {
-      if (!achievement.data.next_achievement) {
-        const chain = this.getChainAchievements(achievement);
-        
-        switch (filter) {
-          case 'collected':
-            // Show parent if any child is collected
-            return chain.some(a => this.isCollected()(a));
-          case 'uncollected':
-            // Show parent if any child is uncollected
-            return chain.some(a => !this.isCollected()(a));
-          default:
-            return true;
-        }
+      const chain = this.getChainAchievements(achievement);
+      
+      if (filter === 'collected') {
+        // Show parent if any child is collected
+        return chain.some(a => this.isCollected()(a));
       }
-      return false;
+      
+      if (filter === 'uncollected') {
+        // Show parent if any child is uncollected
+        return chain.some(a => !this.isCollected()(a));
+      }
+      
+      return true;
     });
   }
 
@@ -280,10 +288,13 @@ export class CategoryViewComponent {
     
     switch (filter) {
       case 'collected':
+        // Only show collected achievements in the chain
         return chain.filter(a => this.isCollected()(a));
       case 'uncollected':
+        // Only show uncollected achievements in the chain
         return chain.filter(a => !this.isCollected()(a));
       default:
+        // For 'all', show the complete chain
         return chain;
     }
   }

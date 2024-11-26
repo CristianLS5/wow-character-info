@@ -45,7 +45,7 @@
                     @for (achievement of getFilteredMainAchievements(category.name); track achievement.achievementId) {
                     <div class="mb-4">
                         <div class="flex items-center p-4 bg-custom-bg rounded-lg shadow-md hover:bg-opacity-80 transition-all duration-300"
-                            [class.opacity-40]="!isCollected()(achievement)">
+                            [class.opacity-40]="!hasChain(achievement) && !isCollected()(achievement)">
                             <div class="flex items-center flex-grow"
                                  [class.cursor-pointer]="!hasChain(achievement)"
                                  (click)="!hasChain(achievement) ? openWowheadLink(achievement.data.id) : null">
@@ -78,7 +78,7 @@
                                         <input type="checkbox" class="peer" />
                                         <div class="collapse-title min-h-0 p-0"></div>
                                         <div class="collapse-content">
-                                            @for (chainAchievement of getChainAchievements(achievement); track chainAchievement.achievementId) {
+                                            @for (chainAchievement of getFilteredChainAchievements(achievement); track chainAchievement.achievementId) {
                                             <div class="flex items-center mt-2 p-3 bg-custom-card-bg rounded-lg">
                                                 <div class="flex items-center flex-grow cursor-pointer"
                                                      (click)="openWowheadLink(chainAchievement.data.id)">
