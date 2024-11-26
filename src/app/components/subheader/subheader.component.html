@@ -3,8 +3,10 @@
         <ul class="flex justify-center space-x-4 p-2">
             @for (tab of tabs; track tab.route) {
             <li>
-                <a [routerLink]="[tab.route]" routerLinkActive="text-blue-500 font-bold"
-                    class="px-3 py-2 rounded-md hover:bg-custom-bg transition-colors duration-200">
+                <a (click)="navigateTo(tab.route)" 
+                   [class.text-blue-500]="isActive(tab.route)"
+                   [class.font-bold]="isActive(tab.route)"
+                   class="px-3 py-2 rounded-md hover:bg-custom-bg transition-colors duration-200 cursor-pointer">
                     {{ tab.label }}
                 </a>
             </li>

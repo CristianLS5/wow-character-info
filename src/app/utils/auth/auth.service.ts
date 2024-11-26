@@ -13,6 +13,7 @@ export class AuthService {
   private isAuthenticatedSignal = signal(false);
   private authCheckComplete = signal(false);
   private isPersistentSession = signal(false);
+  public readonly authInitializedSignal = signal(false);
 
   constructor(private http: HttpClient, private router: Router) {
     this.initializeAuthState();
@@ -21,32 +22,29 @@ export class AuthService {
   private initializeAuthState() {
     console.log('Initializing auth state');
     
-    // Check if we have a persistent session
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const sid = localStorage.getItem('sid') || sessionStorage.getItem('sid');
 
     if (hasLocalStorage && sid) {
-      // Validate the persistent session
       this.validateStoredSession(sid, true).subscribe({
         next: (response) => {
           if (response.isAuthenticated) {
-            // Restore session storage for the new tab
             sessionStorage.setItem('auth_time', Date.now().toString());
             sessionStorage.setItem('sid', sid);
           } else {
-            // Clear invalid persistent session
             this.clearAuthState();
           }
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
+          this.authInitializedSignal.set(true);
           this.authCheckComplete.set(true);
         },
         error: () => {
           this.clearAuthState();
+          this.authInitializedSignal.set(true);
           this.authCheckComplete.set(true);
         }
       });
     } else {
-      // Regular auth check
       this.checkAuthStatus().subscribe({
         next: (response) => {
           console.log('Initial auth check response:', {
@@ -54,10 +52,13 @@ export class AuthService {
             isPersistent: this.isPersistent(),
             isNewTab: this.isNewTab()
           });
+          this.authInitializedSignal.set(true);
+          this.authCheckComplete.set(true);
         },
         error: (error) => {
           console.error('Initial auth check failed:', error);
           this.updateAuthState(false, false);
+          this.authInitializedSignal.set(true);
           this.authCheckComplete.set(true);
         }
       });
@@ -252,5 +253,25 @@ export class AuthService {
     });
 
     return this.isPersistentSession() ? hasLocalStorage : hasSessionStorage;
+  }
+
+  isAuthInitialized(): Observable<boolean> {
+    if (this.authInitializedSignal()) {
+      return of(true);
+    }
+    
+    // Wait for initialization to complete
+    return new Observable<boolean>(subscriber => {
+      const checkInterval = setInterval(() => {
+        if (this.authInitializedSignal()) {
+          subscriber.next(true);
+          subscriber.complete();
+          clearInterval(checkInterval);
+        }
+      }, 50);
+
+      // Cleanup
+      return () => clearInterval(checkInterval);
+    });
   }
 }

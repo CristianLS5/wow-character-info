@@ -1,11 +1,15 @@
-<div class="flex flex-col h-screen">
-  @if (showHeader()) {
-    <app-header></app-header>
-  }
-  @if (showSubheader()) {
-    <app-subheader></app-subheader>
-  }
-  <main class="flex-grow overflow-hidden">
-    <router-outlet></router-outlet>
-  </main>
-</div>
+@if (!isAuthInitialized()) {
+  <app-loading size="2xl" />
+} @else {
+  <div class="flex flex-col h-screen">
+    @if (showHeader()) {
+      <app-header></app-header>
+    }
+    @if (showSubheader()) {
+      <app-subheader></app-subheader>
+    }
+    <main class="flex-grow overflow-hidden">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+}

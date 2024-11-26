@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { LandingComponent } from './components/landing/landing.component';
-import { CharacterComponent } from './components/character/character.component';
 import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
 import { CollectionsComponent } from './components/collections/collections.component';
 import { AuthGuard } from './utils/auth/auth.guard';
@@ -8,38 +7,42 @@ import { AchievementsComponent } from './components/achievements/achievements.co
 import { CategoryDetailsComponent } from './components/achievements/category-details/category-details.component';
 import { ReputationsComponent } from './components/reputations/reputations.component';
 import { InstancesComponent } from './components/instances/instances.component';
+import { CharacterResolver } from './resolvers/character.resolver';
+import { DashboardComponent } from './components/home/home.component';
+import { CharacterComponent } from './components/character/character.component';
 
 export const routes: Routes = [
-  { path: '', component: LandingComponent },
+  { 
+    path: '', 
+    component: LandingComponent,
+    canActivate: [AuthGuard],
+    data: { requiresAuth: false }
+  },
   { path: 'auth/callback', component: AuthCallbackComponent },
-  {
-    path: 'character',
-    component: CharacterComponent,
-    canActivate: [AuthGuard],
+  { 
+    path: 'dashboard', 
+    component: DashboardComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'character', 
+    redirectTo: 'dashboard', 
+    pathMatch: 'full' 
   },
   {
-    path: 'collections',
-    component: CollectionsComponent,
+    path: ':realm/:character',
     canActivate: [AuthGuard],
-  },
-  {
-    path: 'achievements',
-    component: AchievementsComponent,
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'achievements/:category',
-    component: CategoryDetailsComponent,
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'reputations',
-    component: ReputationsComponent,
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'instances',
-    component: InstancesComponent,
-    canActivate: [AuthGuard],
-  },
+    resolve: {
+      character: CharacterResolver
+    },
+    children: [
+      { path: '', redirectTo: 'character', pathMatch: 'full' },
+      { path: 'character', component: CharacterComponent },
+      { path: 'collections', component: CollectionsComponent },
+      { path: 'achievements', component: AchievementsComponent },
+      { path: 'achievements/:category', component: CategoryDetailsComponent },
+      { path: 'reputations', component: ReputationsComponent },
+      { path: 'instances', component: InstancesComponent },
+    ]
+  }
 ];

@@ -57,17 +57,12 @@ export class HeaderComponent {
   onFetchCharacter() {
     if (this.realm() && this.characterName()) {
       this.errorMessage.set('');
-      this.characterService
-        .fetchAllCharacterData(this.realm(), this.characterName())
-        .subscribe({
-          next: () => console.log('Character data fetched successfully'),
-          error: (error) => {
-            console.error('Error fetching character data', error);
-            this.errorMessage.set(
-              'Failed to fetch character data. Please try again.'
-            );
-          },
-        });
+      const realm = this.realm().toLowerCase();
+      const character = this.characterName().toLowerCase();
+
+      this.router.navigate([realm, character, 'character']).then(() => {
+        console.log('Navigating to character page');
+      });
     } else {
       this.errorMessage.set('Please enter both realm and character name.');
     }
