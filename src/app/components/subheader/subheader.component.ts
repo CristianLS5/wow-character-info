@@ -50,6 +50,6 @@ export class SubheaderComponent implements OnInit {
   }
 
   isActive(route: string): boolean {
-    return this.router.url.endsWith(`/${route}`);
+    return this.router.url.includes(`/${route}`);
   }
 }

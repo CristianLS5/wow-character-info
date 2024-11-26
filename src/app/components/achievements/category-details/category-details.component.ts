@@ -25,86 +25,83 @@ export class CategoryDetailsComponent implements OnInit {
 
   protected achievements = signal<Achievement[]>([]);
   protected completedAchievements = signal<Map<number, number>>(new Map());
-  protected categoryData!: CategoryViewData;
-  private isLoading = signal(true);
-  private error = signal<string | null>(null);
-
-  private getCategoryName(achievement: Achievement): string {
-    return (
-      achievement.data.category.parent_category?.name ||
-      achievement.data.category.name
-    );
-  }
+  protected categoryData: CategoryViewData = {
+    title: '',
+    achievements: this.achievements,
+    completedAchievements: this.completedAchievements,
+    filterPredicate: () => true,
+    isLoading: true,
+    error: null
+  };
 
   ngOnInit() {
     const categoryName = this.route.snapshot.paramMap.get('category');
     if (!categoryName) {
-      this.error.set('No category specified');
-      this.isLoading.set(false);
+      this.categoryData = {
+        ...this.categoryData,
+        isLoading: false,
+        error: 'No category specified'
+      };
       return;
     }
 
     const config = this.getCategoryConfig(categoryName);
     this.categoryData = {
+      ...this.categoryData,
       title: config.title,
-      achievements: this.achievements,
-      completedAchievements: this.completedAchievements,
-      filterPredicate: config.filterPredicate,
-      isLoading: this.isLoading(),
-      error: this.error()
+      filterPredicate: config.filterPredicate
     };
 
     const characterInfo = this.characterService.getCharacterInfo();
     if (!characterInfo) {
-      console.error('Character information not available');
+      this.categoryData = {
+        ...this.categoryData,
+        isLoading: false,
+        error: 'Character information not available'
+      };
       return;
     }
-
-    const { realmSlug, characterName } = characterInfo;
 
     forkJoin({
       allAchievements: this.achievementService.getAllAchievements(),
       characterAchievements: this.achievementService.getCharacterAchievements(
-        realmSlug,
-        characterName.toLowerCase()
+        characterInfo.realm.slug,
+        characterInfo.name.toLowerCase()
       ),
-    })
-      .pipe(
-        map(({ allAchievements, characterAchievements }) => {
-          // Only get the achievements for this category
-          const filteredAchievements = allAchievements.filter(
-            config.filterPredicate
-          );
-          this.achievements.set(filteredAchievements);
+    }).pipe(
+      map(({ allAchievements, characterAchievements }) => {
+        const filteredAchievements = allAchievements.filter(config.filterPredicate);
+        this.achievements.set(filteredAchievements);
 
-          // Create and update completedAchievements map with timestamps
-          const completedMap = new Map<number, number>();
-          characterAchievements.achievements.forEach((charAchievement) => {
-            if (charAchievement && charAchievement.completed_timestamp) {
-              completedMap.set(
-                charAchievement.achievement.id,
-                charAchievement.completed_timestamp
-              );
-            }
-          });
-          this.completedAchievements.set(completedMap);
+        const completedMap = new Map<number, number>();
+        characterAchievements.achievements.forEach((charAchievement) => {
+          if (charAchievement?.completed_timestamp) {
+            completedMap.set(
+              charAchievement.achievement.id,
+              charAchievement.completed_timestamp
+            );
+          }
+        });
+        this.completedAchievements.set(completedMap);
 
-          return filteredAchievements;
-        }),
-        finalize(() => {
-          this.isLoading.set(false);
-        })
-      )
-      .subscribe({
-        next: (achievements) => {
-          // ... existing code ...
-        },
-        error: (err) => {
-          console.error('Error loading achievements:', err);
-          this.error.set('Failed to load achievements');
-          this.isLoading.set(false);
-        }
-      });
+        return filteredAchievements;
+      })
+    ).subscribe({
+      next: () => {
+        this.categoryData = {
+          ...this.categoryData,
+          isLoading: false
+        };
+      },
+      error: (err) => {
+        console.error('Error loading achievements:', err);
+        this.categoryData = {
+          ...this.categoryData,
+          isLoading: false,
+          error: 'Failed to load achievements'
+        };
+      }
+    });
   }
 
   private getCategoryConfig(category: string): CategoryConfig {
@@ -138,5 +135,12 @@ export class CategoryDetailsComponent implements OnInit {
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  }
+
+  private getCategoryName(achievement: Achievement): string {
+    return (
+      achievement.data.category.parent_category?.name ||
+      achievement.data.category.name
+    );
   }
 }

@@ -406,6 +406,14 @@ export class AchievementsComponent implements OnInit {
   }
 
   navigateTo(category: string) {
-    this.router.navigate(['/achievements', category.toLowerCase()]);
+    const characterInfo = this.characterService.getCharacterInfo();
+    if (characterInfo) {
+      this.router.navigate([
+        characterInfo.realm.slug,
+        characterInfo.name.toLowerCase(),
+        'achievements',
+        category.toLowerCase()
+      ]);
+    }
   }
 }
