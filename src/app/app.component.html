@@ -1,5 +1,9 @@
 @if (!isAuthInitialized()) {
-  <app-loading size="2xl" />
+  <div class="flex flex-col h-screen bg-custom-bg">
+    <div class="flex items-center justify-center h-full">
+      <app-loading size="2xl" />
+    </div>
+  </div>
 } @else {
   <div class="flex flex-col h-screen">
     @if (showHeader()) {

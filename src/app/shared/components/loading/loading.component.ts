@@ -21,11 +21,11 @@ export class LoadingComponent {
   get spinnerClass(): string {
     switch(this.size) {
       case 'xl':
-        return 'loading loading-spinner w-19 h-19';
+        return 'loading loading-spinner w-19 h-19 text-custom-card-bg';
       case '2xl':
-        return 'loading loading-spinner w-24 h-24';
+        return 'loading loading-spinner w-24 h-24 text-custom-card-bg';
       default:
-        return `loading loading-spinner loading-${this.size}`;
+        return `loading loading-spinner loading-${this.size} text-custom-card-bg`;
     }
   }
 }
