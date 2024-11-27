@@ -18,8 +18,10 @@ jobs:
       - name: Copy Docker image to EC2
         uses: appleboy/scp-action@master
         with:
-          source: wow-frontend-image.tar
-          target: ec2-user@${{ secrets.EC2_HOST }}:~/wow-frontend-image.tar
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          target: "~/"
+          source: "wow-frontend-image.tar"
           key: ${{ secrets.EC2_SSH_KEY }}
       
       - name: Deploy to EC2
