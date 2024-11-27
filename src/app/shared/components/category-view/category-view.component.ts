@@ -150,8 +150,9 @@ export class CategoryViewComponent {
   }
 
   protected getTotalCategoryProgress(categoryName: string) {
+    const achievements = this.getFilteredAchievements(categoryName);
     const progress = this.achievementProgressService.calculateProgress(
-      this.data.achievements().filter(a => a.data.category.name === categoryName),
+      achievements,
       this.data.completedAchievements(),
       this.data.filterPredicate
     );
@@ -179,31 +180,37 @@ export class CategoryViewComponent {
   }
 
   protected getFilteredMainAchievements(categoryName: string): Achievement[] {
-    // First get all achievements for this category
-    let achievements = this.getFilteredAchievements(categoryName);
-
-    // Deduplicate achievements
+    // First filter achievements by category
+    let achievements = this.data
+      .achievements()
+      .filter(achievement => achievement.data.category.name === categoryName)
+      .filter(achievement => !achievement.data.next_achievement);
+    
     achievements = this.deduplicateAchievements(achievements);
-
-    // Filter out achievements that have next_achievement
-    achievements = achievements.filter(achievement => {
-        return !achievement.data.next_achievement;
-    });
-
-    // Debug log for Legacy category
-    if (categoryName === 'Legacy') {
-        console.log('Filtered Achievements:', achievements.map(a => ({
-            id: a.data.id,
-            name: a.data.name,
-            category: {
-                name: a.data.category.name,
-                parent: a.data.category.parent_category?.name
-            },
-            isCollected: this.isCollected()(a)
-        })));
+    
+    const filter = this.filteredAchievements()[categoryName]?.filter() || 'all';
+    
+    // For 'all' filter, return all parent achievements
+    if (filter === 'all') {
+      return achievements;
     }
 
-    return achievements;
+    // For 'collected' or 'uncollected', only show parents that have matching children
+    return achievements.filter(achievement => {
+      const chain = this.getChainAchievements(achievement);
+      
+      if (filter === 'collected') {
+        // Show parent if any child is collected
+        return chain.some(a => this.isCollected()(a));
+      }
+      
+      if (filter === 'uncollected') {
+        // Show parent if any child is uncollected
+        return chain.some(a => !this.isCollected()(a));
+      }
+      
+      return true;
+    });
   }
 
   protected openWowheadLink(achievementId: number): void {
@@ -271,5 +278,38 @@ export class CategoryViewComponent {
     
     // If character is Horde, show Alliance Only, and vice versa
     return achievementFaction === 'Alliance' ? 'Alliance Only' : 'Horde Only';
+  }
+
+  // Add new method to filter chain achievements
+  protected getFilteredChainAchievements(achievement: Achievement): Achievement[] {
+    const chain = this.getChainAchievements(achievement);
+    const categoryName = achievement.data.category.name;
+    const filter = this.filteredAchievements()[categoryName]?.filter() || 'all';
+    
+    switch (filter) {
+      case 'collected':
+        // Only show collected achievements in the chain
+        return chain.filter(a => this.isCollected()(a));
+      case 'uncollected':
+        // Only show uncollected achievements in the chain
+        return chain.filter(a => !this.isCollected()(a));
+      default:
+        // For 'all', show the complete chain
+        return chain;
+    }
+  }
+
+  protected hasCollectedChildren(achievement: Achievement): boolean {
+    const filter = this.filteredAchievements()[achievement.data.category.name]?.filter() || 'all';
+    const chain = this.getFilteredChainAchievements(achievement);
+    
+    switch (filter) {
+      case 'collected':
+        return chain.some(a => this.isCollected()(a));
+      case 'uncollected':
+        return chain.some(a => !this.isCollected()(a));
+      default:
+        return this.isCollected()(achievement);
+    }
   }
 }

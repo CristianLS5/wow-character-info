@@ -40,34 +40,27 @@ export class HeaderComponent {
   private router = inject(Router);
   private elementRef = inject(ElementRef);
 
-  realm = signal('');
-  characterName = signal('');
+  realm = computed(() => this.characterProfile()?.realm?.name || '');
+  characterName = computed(() => this.characterProfile()?.name || '');
   errorMessage = signal('');
   characterProfile = computed(() => this.characterService.characterProfile());
   characterMedia = computed(() => this.characterService.characterMedia());
 
   onRealmChange(value: string) {
-    this.realm.set(value);
+    this._tempRealm = value;
   }
 
   onCharacterNameChange(value: string) {
-    this.characterName.set(value);
+    this._tempCharacterName = value;
   }
 
   onFetchCharacter() {
-    if (this.realm() && this.characterName()) {
+    const realm = this._tempRealm || this.realm();
+    const character = this._tempCharacterName || this.characterName();
+
+    if (realm && character) {
       this.errorMessage.set('');
-      this.characterService
-        .fetchAllCharacterData(this.realm(), this.characterName())
-        .subscribe({
-          next: () => console.log('Character data fetched successfully'),
-          error: (error) => {
-            console.error('Error fetching character data', error);
-            this.errorMessage.set(
-              'Failed to fetch character data. Please try again.'
-            );
-          },
-        });
+      this.router.navigate([realm.toLowerCase(), character.toLowerCase(), 'character']);
     } else {
       this.errorMessage.set('Please enter both realm and character name.');
     }
@@ -115,4 +108,7 @@ export class HeaderComponent {
       this.isDropdownOpen.set(false);
     }
   }
+
+  private _tempRealm = '';
+  private _tempCharacterName = '';
 }

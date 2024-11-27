@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, finalize, tap } from 'rxjs/operators';
-import { forkJoin, Observable, throwError } from 'rxjs';
+import { forkJoin, Observable, throwError, of } from 'rxjs';
 import { CharacterEquipment } from '../interfaces/character-equipment.interface';
 import { CharacterMedia } from '../interfaces/character-media.interface';
 import { CharacterInfo } from '../interfaces/character.interface';
@@ -17,6 +17,7 @@ export class CharacterService {
   private characterMediaSignal = signal<CharacterMedia | null>(null);
   private characterProfileSignal = signal<CharacterInfo | null>(null);
   private errorSignal = signal<string | null>(null);
+  private lastViewedCharacter = signal<{ realm: string; name: string } | null>(null);
 
   loading = computed(() => this.loadingSignal());
   error = computed(() => this.errorSignal());
@@ -27,14 +28,30 @@ export class CharacterService {
     realm: string,
     characterName: string
   ): Observable<[CharacterEquipment, CharacterMedia, CharacterInfo]> {
+    const currentProfile = this.characterProfileSignal();
+    if (currentProfile && 
+        currentProfile.name.toLowerCase() === characterName.toLowerCase() && 
+        currentProfile.realm.slug.toLowerCase() === realm.toLowerCase()) {
+      console.log('Using cached character data');
+      return of([
+        this.characterEquipmentSignal()!,
+        this.characterMediaSignal()!,
+        currentProfile
+      ]);
+    }
+
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
+    this.setLastViewedCharacter(realm, characterName);
 
     return forkJoin([
       this.getCharacterEquipment(realm, characterName),
       this.getCharacterMedia(realm, characterName),
       this.getCharacterProfile(realm, characterName),
     ]).pipe(
+      tap(() => {
+        console.log('All character data fetched successfully');
+      }),
       finalize(() => {
         this.loadingSignal.set(false);
       })
@@ -144,5 +161,31 @@ export class CharacterService {
       };
     }
     return null;
+  }
+
+  setLastViewedCharacter(realm: string, name: string) {
+    const characterData = { realm, name };
+    localStorage.setItem('last_character', JSON.stringify(characterData));
+  }
+
+  getLastViewedCharacter(): { realm: string; name: string } | null {
+    const stored = localStorage.getItem('last_character');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error('Error parsing last character:', e);
+        return null;
+      }
+    }
+    return null;
+  }
+
+  hasValidCharacterData(): boolean {
+    return !!(
+      this.characterProfileSignal() &&
+      this.characterEquipmentSignal() &&
+      this.characterMediaSignal()
+    );
   }
 }

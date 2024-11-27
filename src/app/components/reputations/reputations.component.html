@@ -17,7 +17,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 @for (reputation of reputationsMap[expansion]; track reputation.faction.id) {
                 <div class="bg-custom-card-bg rounded-lg p-4 shadow-md hover:shadow-glow transition-all duration-300 cursor-pointer animate-fade-in-right"
-                    [style.animation-delay]="$index * 50 + 'ms'">
+                    [style.animation-delay]="$index * 50 + 'ms'"
+                    (click)="openWowheadLink(reputation.faction.id)">
                     <div class="flex items-center gap-4">
                         <!-- Fixed Faction Name with Tooltip -->
                         <div class="tooltip tooltip-bottom" attr.data-tip="{{ reputation.faction.name }}">
@@ -30,22 +31,22 @@
                         <!-- Progress Bar Container -->
                         <div class="flex-1 relative">
                             <div class="w-full bg-gray-700 rounded-full h-6">
-                                <div class="h-6 rounded-full transition-all duration-300" [class]="{
-                                                        'bg-green-500': reputation.standing.value === reputation.standing.max && !reputation.paragon,
-                                                        'bg-blue-500': reputation.standing.value !== reputation.standing.max && !reputation.paragon,
-                                                        'bg-violet-500': reputation.paragon
-                                                    }"
-                                    [style.width.%]="(reputation.standing.value / reputation.standing.max) * 100">
+                                <div class="h-6 rounded-full transition-all duration-300" 
+                                     [class]="{
+                                         'bg-green-500': (reputation.standing.max === 0 || reputation.standing.value === reputation.standing.max) && !reputation.paragon,
+                                         'bg-blue-500': reputation.standing.max !== 0 && reputation.standing.value !== reputation.standing.max && !reputation.paragon,
+                                         'bg-violet-500': reputation.paragon
+                                     }"
+                                     [style.width.%]="reputation.standing.max === 0 ? 100 : (reputation.standing.value / reputation.standing.max) * 100">
                                 </div>
                                 <!-- Progress Text -->
-                                <div
-                                    class="absolute inset-0 flex items-center justify-center text-sm text-white font-medium">
+                                <div class="absolute inset-0 flex items-center justify-center text-sm text-white font-medium">
                                     @if (reputation.paragon) {
-                                    PARAGON
-                                    } @else if (reputation.standing.value === reputation.standing.max) {
-                                    MAX
+                                        PARAGON
+                                    } @else if (reputation.standing.max === 0 || reputation.standing.value === reputation.standing.max) {
+                                        MAX
                                     } @else {
-                                    {{ reputation.standing.value }} / {{ reputation.standing.max }}
+                                        {{ reputation.standing.value }} / {{ reputation.standing.max }}
                                     }
                                 </div>
                             </div>

@@ -26,12 +26,12 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "src/app/assets",
+                "output": "assets/"
               },
               {
                 "glob": "**/*",
-                "input": "src/app/assets",
-                "output": "assets/"
+                "input": "public"
               }
             ],
             "styles": ["src/styles.sass"],
@@ -88,12 +88,12 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "src/app/assets",
+                "output": "assets/"
               },
               {
                 "glob": "**/*",
-                "input": "src/app/assets",
-                "output": "assets/"
+                "input": "public"
               }
             ],
             "styles": ["src/styles.sass"],
