@@ -34,7 +34,6 @@ jobs:
             docker load < ~/wow-frontend-image.tar
             docker stop wow-frontend || true
             docker rm wow-frontend || true
-            # Create network if it doesn't exist
             docker network create wow-app-network || true
             docker run -d \
               --name wow-frontend \
