@@ -143,7 +143,24 @@ export class AuthService {
     window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
+  private logAuthEvent(event: string, data: any) {
+    console.group(`🔐 Auth Event: ${event}`);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Data:', data);
+    console.groupEnd();
+  }
+
   handleCallback(sid: string, persistentSession: boolean): Observable<any> {
+    this.logAuthEvent('Handle Callback Started', {
+      sid: sid ? '***' : 'none',
+      persistentSession,
+      currentAuthState: this.isAuthenticated(),
+      storage: {
+        hasLocalStorage: !!localStorage.getItem('auth_state'),
+        hasSessionStorage: !!sessionStorage.getItem('auth_time')
+      }
+    });
+
     return this.http
       .post<{ isAuthenticated: boolean; isPersistent: boolean }>(
         `${this.apiUrl}/validate-session`,
@@ -152,18 +169,14 @@ export class AuthService {
       )
       .pipe(
         tap((response) => {
-          console.log('Session validation response:', response);
-          if (response.isAuthenticated) {
-            const timestamp = Date.now().toString();
-            if (persistentSession) {
-              localStorage.setItem('auth_state', 'true');
-              localStorage.setItem('auth_time', timestamp);
+          this.logAuthEvent('Session Validation Response', {
+            response,
+            persistentSession,
+            storage: {
+              hasLocalStorage: !!localStorage.getItem('auth_state'),
+              hasSessionStorage: !!sessionStorage.getItem('auth_time')
             }
-            sessionStorage.setItem('auth_time', timestamp);
-            sessionStorage.setItem('sid', sid);
-
-            this.updateAuthState(true, persistentSession);
-          }
+          });
         })
       );
   }
