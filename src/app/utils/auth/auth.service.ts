@@ -11,6 +11,8 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
   private frontendCallbackUrl = `${environment.frontendUrl}/auth/callback`;
+  private bnetCallbackUrl = environment.authCallbackUrl;
+
   private isAuthenticatedSignal = signal(false);
   private authCheckComplete = signal(false);
   private isPersistentSession = signal(false);
@@ -129,6 +131,13 @@ export class AuthService {
     const params = new URLSearchParams({
       callback: this.frontendCallbackUrl,
       consent: consent.toString(),
+    });
+
+    // Add debug logging
+    console.log('Login params:', {
+      callback: this.frontendCallbackUrl,
+      apiUrl: this.apiUrl,
+      bnetCallback: this.bnetCallbackUrl,
     });
 
     window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
