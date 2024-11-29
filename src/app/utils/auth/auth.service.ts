@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment.prod';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
