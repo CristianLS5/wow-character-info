@@ -5,12 +5,13 @@ import { forkJoin, Observable, throwError, of } from 'rxjs';
 import { CharacterEquipment } from '../interfaces/character-equipment.interface';
 import { CharacterMedia } from '../interfaces/character-media.interface';
 import { CharacterInfo } from '../interfaces/character.interface';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CharacterService {
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = environment.apiUrl;
 
   private loadingSignal = signal<boolean>(false);
   private characterEquipmentSignal = signal<CharacterEquipment | null>(null);

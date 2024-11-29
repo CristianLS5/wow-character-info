@@ -8,13 +8,14 @@ import {
 } from '../interfaces/dungeons.interface';
 import { SeasonsResponse } from '../interfaces/season.interface';
 import { RaidProfile } from '../interfaces/raids.interface';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class InstanceService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = environment.apiUrl;
   private affixCache$: Observable<Affix[]> | null = null;
 
   getCharacterDungeons(

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, forkJoin, from } from 'rxjs';
 import { map, switchMap, concatMap, scan, catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import {
   CollectedPet,
   CreatureMediaResponse,
@@ -16,7 +17,7 @@ import { HeirloomResponse, CollectedHeirloomsResponse } from '../interfaces/heir
   providedIn: 'root',
 })
 export class CollectionsService {
-  private apiUrl = 'http://localhost:3000/api'; // Update this to match your backend URL
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
