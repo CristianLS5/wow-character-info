@@ -1,15 +1,15 @@
-FROM node:20
-
+# Build stage
+FROM node:20 AS builder
 WORKDIR /app
-
 COPY package*.json ./
-
 RUN npm install
-
 COPY . .
-
 RUN npm run build
 
-EXPOSE 4200
+# Production stage
+FROM nginx:alpine
+COPY --from=builder /app/dist/* /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["nginx", "-g", "daemon off;"]
