@@ -141,7 +141,7 @@ export class AuthService {
     });
 
     // Redirect to our backend auth endpoint
-    window.location.href = `${this.apiUrl}/auth/bnet?${params.toString()}`;
+    window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
   private logAuthEvent(event: string, data: any) {
