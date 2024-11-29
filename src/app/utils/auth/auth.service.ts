@@ -133,14 +133,15 @@ export class AuthService {
       consent: consent.toString(),
     });
 
-    // Add debug logging
-    console.log('Login params:', {
-      callback: this.frontendCallbackUrl,
+    console.log('Starting OAuth flow:', {
+      frontendCallback: this.frontendCallbackUrl,
       apiUrl: this.apiUrl,
       bnetCallback: this.bnetCallbackUrl,
+      timestamp: new Date().toISOString(),
     });
 
-    window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
+    // Redirect to our backend auth endpoint
+    window.location.href = `${this.apiUrl}/auth/bnet?${params.toString()}`;
   }
 
   private logAuthEvent(event: string, data: any) {
@@ -157,8 +158,8 @@ export class AuthService {
       currentAuthState: this.isAuthenticated(),
       storage: {
         hasLocalStorage: !!localStorage.getItem('auth_state'),
-        hasSessionStorage: !!sessionStorage.getItem('auth_time')
-      }
+        hasSessionStorage: !!sessionStorage.getItem('auth_time'),
+      },
     });
 
     return this.http
@@ -174,9 +175,30 @@ export class AuthService {
             persistentSession,
             storage: {
               hasLocalStorage: !!localStorage.getItem('auth_state'),
-              hasSessionStorage: !!sessionStorage.getItem('auth_time')
-            }
+              hasSessionStorage: !!sessionStorage.getItem('auth_time'),
+            },
           });
+        })
+      );
+  }
+
+  handleOAuthCallback(code: string, state: string): Observable<any> {
+    return this.http
+      .post(
+        `${this.apiUrl}/auth/callback`,
+        { code, state },
+        { withCredentials: true }
+      )
+      .pipe(
+        tap((response: any) => {
+          if (response.isAuthenticated) {
+            sessionStorage.setItem('auth_time', Date.now().toString());
+            if (response.isPersistent) {
+              localStorage.setItem('auth_state', 'true');
+              localStorage.setItem('auth_time', Date.now().toString());
+            }
+          }
+          this.updateAuthState(response.isAuthenticated, response.isPersistent);
         })
       );
   }
