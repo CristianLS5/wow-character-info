@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, map } from 'rxjs';
 import { Achievement } from '../interfaces/achievement.interface';
+import { environment } from '../../environments/environment';
 
 interface CharacterAchievementSummary {
   total_quantity: number;
@@ -28,7 +29,7 @@ interface CharacterAchievementSummary {
 })
 export class AchievementService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = environment.apiUrl;
 
   getAllAchievements(): Observable<Achievement[]> {
     console.log('Fetching all achievements...');

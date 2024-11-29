@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment.prod';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/auth';
-  private frontendCallbackUrl = 'http://localhost:4200/auth/callback';
+  private apiUrl = `${environment.apiUrl}/auth`;
+  private frontendCallbackUrl = `${environment.frontendUrl}/auth/callback`;
   private isAuthenticatedSignal = signal(false);
   private authCheckComplete = signal(false);
   private isPersistentSession = signal(false);
@@ -21,7 +22,7 @@ export class AuthService {
 
   private initializeAuthState() {
     console.log('Initializing auth state');
-    
+
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const sid = localStorage.getItem('sid') || sessionStorage.getItem('sid');
 
@@ -42,7 +43,7 @@ export class AuthService {
           this.clearAuthState();
           this.authInitializedSignal.set(true);
           this.authCheckComplete.set(true);
-        }
+        },
       });
     } else {
       this.checkAuthStatus().subscribe({
@@ -50,7 +51,7 @@ export class AuthService {
           console.log('Initial auth check response:', {
             isAuthenticated: response,
             isPersistent: this.isPersistent(),
-            isNewTab: this.isNewTab()
+            isNewTab: this.isNewTab(),
           });
           this.authInitializedSignal.set(true);
           this.authCheckComplete.set(true);
@@ -60,30 +61,40 @@ export class AuthService {
           this.updateAuthState(false, false);
           this.authInitializedSignal.set(true);
           this.authCheckComplete.set(true);
-        }
+        },
       });
     }
   }
 
-  private validateStoredSession(sid: string, isPersistent: boolean): Observable<any> {
-    return this.http.post(`${this.apiUrl}/validate-session`, {
-      sid,
-      persistentSession: isPersistent
-    }, {
-      withCredentials: true,
-      headers: { 'X-Session-ID': sid }
-    });
+  private validateStoredSession(
+    sid: string,
+    isPersistent: boolean
+  ): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/validate-session`,
+      {
+        sid,
+        persistentSession: isPersistent,
+      },
+      {
+        withCredentials: true,
+        headers: { 'X-Session-ID': sid },
+      }
+    );
   }
 
-  private updateAuthState(isAuthenticated: boolean, isPersistent: boolean = false) {
+  private updateAuthState(
+    isAuthenticated: boolean,
+    isPersistent: boolean = false
+  ) {
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const hasSessionStorage = !!sessionStorage.getItem('auth_time');
-    
+
     console.log('Updating auth state:', {
       isAuthenticated,
       isPersistent,
       hasSessionStorage,
-      hasLocalStorage
+      hasLocalStorage,
     });
 
     // Only set authenticated if storage matches persistence type
@@ -98,7 +109,10 @@ export class AuthService {
   }
 
   // Update the auth-callback component to store SID properly
-  public handleAuthCallback(sid: string, isPersistent: boolean): Observable<any> {
+  public handleAuthCallback(
+    sid: string,
+    isPersistent: boolean
+  ): Observable<any> {
     // Store SID in appropriate storage
     if (isPersistent) {
       localStorage.setItem('sid', sid);
@@ -114,9 +128,9 @@ export class AuthService {
   login(consent: boolean = false): void {
     const params = new URLSearchParams({
       callback: this.frontendCallbackUrl,
-      consent: consent.toString()
+      consent: consent.toString(),
     });
-    
+
     window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
@@ -138,7 +152,7 @@ export class AuthService {
             }
             sessionStorage.setItem('auth_time', timestamp);
             sessionStorage.setItem('sid', sid);
-            
+
             this.updateAuthState(true, persistentSession);
           }
         })
@@ -149,7 +163,7 @@ export class AuthService {
     const sid = sessionStorage.getItem('sid');
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const hasSessionStorage = !!sessionStorage.getItem('auth_time');
-    
+
     // If no storage exists, not authenticated
     if (!sid || (!hasLocalStorage && !hasSessionStorage)) {
       this.updateAuthState(false, false);
@@ -159,12 +173,12 @@ export class AuthService {
     return this.http
       .get<{ isAuthenticated: boolean; isPersistent: boolean }>(
         `${this.apiUrl}/validate`,
-        { 
+        {
           withCredentials: true,
-          headers: { 
+          headers: {
             'X-Session-ID': sid,
-            'X-Storage-Type': hasLocalStorage ? 'local' : 'session'
-          }
+            'X-Storage-Type': hasLocalStorage ? 'local' : 'session',
+          },
         }
       )
       .pipe(
@@ -172,7 +186,7 @@ export class AuthService {
           console.log('Auth status response:', response);
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }),
-        map(response => response.isAuthenticated),
+        map((response) => response.isAuthenticated),
         catchError(() => {
           this.clearAuthState();
           return of(false);
@@ -245,11 +259,11 @@ export class AuthService {
   private hasValidStorage(): boolean {
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const hasSessionStorage = !!sessionStorage.getItem('auth_time');
-    
+
     console.log('Storage check:', {
       hasLocalStorage,
       hasSessionStorage,
-      isPersistent: this.isPersistentSession()
+      isPersistent: this.isPersistentSession(),
     });
 
     return this.isPersistentSession() ? hasLocalStorage : hasSessionStorage;
@@ -259,9 +273,9 @@ export class AuthService {
     if (this.authInitializedSignal()) {
       return of(true);
     }
-    
+
     // Wait for initialization to complete
-    return new Observable<boolean>(subscriber => {
+    return new Observable<boolean>((subscriber) => {
       const checkInterval = setInterval(() => {
         if (this.authInitializedSignal()) {
           subscriber.next(true);
