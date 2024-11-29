@@ -4,5 +4,5 @@ export const environment: Environment = {
   production: true,
   apiUrl: 'https://api.wowcharacterviewer.com',
   frontendUrl: 'https://wowcharacterviewer.com',
-  authCallbackUrl: 'https://wowcharacterviewer.com/auth/callback',
+  authCallbackUrl: 'https://api.wowcharacterviewer.com/auth/callback',
 };
