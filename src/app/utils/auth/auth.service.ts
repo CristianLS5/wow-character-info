@@ -185,7 +185,7 @@ export class AuthService {
   handleOAuthCallback(code: string, state: string): Observable<any> {
     return this.http
       .post(
-        `${this.apiUrl}/auth/callback`,
+        `${this.apiUrl}/callback`,
         { code, state },
         { withCredentials: true }
       )
