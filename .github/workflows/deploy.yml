@@ -31,15 +31,28 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Load the new image
             docker load < ~/wow-frontend-image.tar
+            
+            # Stop and remove existing container
             docker stop wow-frontend || true
             docker rm wow-frontend || true
+            
+            # Ensure network exists
             docker network create wow-app-network || true
+            
+            # Run new container
             docker run -d \
               --name wow-frontend \
               --network wow-app-network \
-              -p 80:80 \
+              -p 3000:3000 \
               --restart unless-stopped \
               wow-frontend-image
+            
+            # Cleanup
             rm ~/wow-frontend-image.tar
-            docker system prune -af
+            docker system prune -af --volumes
+            
+            # Verify deployment
+            echo "Checking if container is running..."
+            docker ps | grep wow-frontend
