@@ -133,14 +133,7 @@ export class AuthService {
       consent: consent.toString(),
     });
 
-    console.log('Starting OAuth flow:', {
-      frontendCallback: this.frontendCallbackUrl,
-      apiUrl: this.apiUrl,
-      bnetCallback: this.bnetCallbackUrl,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Redirect to our backend auth endpoint
+    // Direct browser redirect to backend auth endpoint
     window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
@@ -200,11 +193,17 @@ export class AuthService {
       .post(
         `${this.apiUrl}/callback`,
         { code, state },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       )
       .pipe(
         tap((response: any) => {
           if (response.isAuthenticated) {
+            // Store session ID from response
             this.storeSessionData(response.sessionId, response.isPersistent);
             this.updateAuthState(response.isAuthenticated, response.isPersistent);
           }
