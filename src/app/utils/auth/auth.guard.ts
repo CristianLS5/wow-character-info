@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { CanActivate, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from './auth.service';
 import { Observable, of } from 'rxjs';
 import { take, switchMap } from 'rxjs/operators';
@@ -15,10 +15,7 @@ export class AuthGuard implements CanActivate {
     private characterService: CharacterService
   ) {}
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): Observable<boolean> {
+  canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
     return this.authService.isAuthInitialized().pipe(
       take(1),
       switchMap(() => this.authService.checkAuthStatus()),
@@ -49,15 +46,6 @@ export class AuthGuard implements CanActivate {
             this.router.navigate(['/dashboard']);
           }
           return of(false);
-        }
-
-        // Check if route requires character selection
-        if (route.data['requiresCharacter'] && authState.isAuthenticated) {
-          const lastCharacter = this.characterService.getLastViewedCharacter();
-          if (!lastCharacter) {
-            this.router.navigate(['/dashboard']);
-            return of(false);
-          }
         }
 
         // Auth required routes

@@ -41,63 +41,63 @@ export class AuthService {
     const timestamp = Date.now().toString();
     const state = this.generateState();
     
-    sessionStorage.setItem('auth_time', timestamp);
     sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('auth_time', timestamp);
     localStorage.setItem('oauth_state', state);
     
-    const params = new URLSearchParams({
-      callback: this.frontendCallbackUrl,
-      consent: consent.toString(),
-      timestamp,
-      state
+    this.http.get<{ url: string }>(`${this.apiUrl}/bnet`, {
+      params: {
+        callback: this.frontendCallbackUrl,
+        consent: consent.toString(),
+        state,
+        timestamp
+      }
+    }).subscribe({
+      next: (response) => {
+        window.location.href = response.url;
+      },
+      error: (error) => {
+        console.error('Failed to initiate auth:', error);
+        this.router.navigate(['/'], { 
+          queryParams: { 
+            error: 'auth_init_failed',
+            message: 'Failed to start authentication'
+          }
+        });
+      }
     });
-    
-    window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
-    const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
     const storedState = sessionStorage.getItem('oauth_state') || localStorage.getItem('oauth_state');
-    const storageType = this.isPersistent() ? 'local' : 'session';
     
     if (!storedState || storedState !== state) {
       console.error('State mismatch:', { storedState, receivedState: state });
       return throwError(() => new Error('invalid_state'));
     }
-    
-    return this.http
-      .post(
-        `${this.apiUrl}/callback`,
-        { 
-          code, 
-          state,
-          sessionId: sid,
-          storageType,
-          storedState
-        },
-        { 
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
+
+    return this.http.post(
+      `${this.apiUrl}/callback`,
+      { 
+        code, 
+        state,
+        storedState
+      },
+      { withCredentials: true }
+    ).pipe(
+      tap((response: any) => {
+        if (response.isAuthenticated) {
+          sessionStorage.removeItem('oauth_state');
+          localStorage.removeItem('oauth_state');
+          
+          this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }
-      )
-      .pipe(
-        tap((response: any) => {
-          if (response.isAuthenticated) {
-            sessionStorage.removeItem('oauth_state');
-            localStorage.removeItem('oauth_state');
-            
-            this.storeSessionData(response.sessionId, response.isPersistent);
-            this.updateAuthState(response.isAuthenticated, response.isPersistent);
-          }
-        }),
-        catchError(error => {
-          console.error('OAuth Exchange Error:', error.error);
-          this.clearAuthState();
-          throw error;
-        })
-      );
+      }),
+      catchError(error => {
+        this.clearAuthState();
+        return throwError(() => error);
+      })
+    );
   }
 
   checkAuthStatus(): Observable<{ isAuthenticated: boolean; isPersistent: boolean }> {
