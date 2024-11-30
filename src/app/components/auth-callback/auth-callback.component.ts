@@ -47,15 +47,24 @@ export class AuthCallbackComponent implements OnInit {
 
       // Exchange code for session
       this.authService.handleOAuthCallback(code, state).subscribe({
-        next: (result) => {
+        next: (response) => {
           console.log('OAuth Exchange Success:', {
-            isAuthenticated: result.isAuthenticated,
-            isPersistent: result.isPersistent,
+            isAuthenticated: response.isAuthenticated,
+            isPersistent: response.isPersistent,
+            sessionId: response.sessionId
           });
 
-          if (result.isAuthenticated) {
-            const lastCharacter =
-              this.characterService.getLastViewedCharacter();
+          if (response.isAuthenticated) {
+            // Store session ID
+            if (response.isPersistent) {
+              localStorage.setItem('sid', response.sessionId);
+              localStorage.setItem('auth_state', 'true');
+              localStorage.setItem('auth_time', Date.now().toString());
+            }
+            sessionStorage.setItem('sid', response.sessionId);
+            sessionStorage.setItem('auth_time', Date.now().toString());
+
+            const lastCharacter = this.characterService.getLastViewedCharacter();
             const targetRoute = lastCharacter
               ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
               : '/dashboard';
@@ -69,6 +78,10 @@ export class AuthCallbackComponent implements OnInit {
           console.error('OAuth Exchange Error:', error);
           this.router.navigate(['/']);
         },
+        complete: () => {
+          console.timeEnd('authCallback');
+          console.groupEnd();
+        }
       });
     });
   }
