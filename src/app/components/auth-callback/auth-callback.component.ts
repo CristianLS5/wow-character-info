@@ -55,15 +55,6 @@ export class AuthCallbackComponent implements OnInit {
           });
 
           if (response.isAuthenticated) {
-            // Store session ID
-            if (response.isPersistent) {
-              localStorage.setItem('sid', response.sessionId);
-              localStorage.setItem('auth_state', 'true');
-              localStorage.setItem('auth_time', Date.now().toString());
-            }
-            sessionStorage.setItem('sid', response.sessionId);
-            sessionStorage.setItem('auth_time', Date.now().toString());
-
             const lastCharacter = this.characterService.getLastViewedCharacter();
             const targetRoute = lastCharacter
               ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
