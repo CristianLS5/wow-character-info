@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -39,19 +39,31 @@ export class AuthService {
 
   login(consent: boolean = false): void {
     const timestamp = Date.now().toString();
+    const state = this.generateState();
+    
     sessionStorage.setItem('auth_time', timestamp);
+    sessionStorage.setItem('oauth_state', state);
+    localStorage.setItem('oauth_state', state);
     
     const params = new URLSearchParams({
       callback: this.frontendCallbackUrl,
       consent: consent.toString(),
-      timestamp
+      timestamp,
+      state
     });
+    
     window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
     const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
+    const storedState = sessionStorage.getItem('oauth_state') || localStorage.getItem('oauth_state');
     const storageType = this.isPersistent() ? 'local' : 'session';
+    
+    if (!storedState || storedState !== state) {
+      console.error('State mismatch:', { storedState, receivedState: state });
+      return throwError(() => new Error('invalid_state'));
+    }
     
     return this.http
       .post(
@@ -60,7 +72,8 @@ export class AuthService {
           code, 
           state,
           sessionId: sid,
-          storageType
+          storageType,
+          storedState
         },
         { 
           withCredentials: true,
@@ -72,6 +85,9 @@ export class AuthService {
       .pipe(
         tap((response: any) => {
           if (response.isAuthenticated) {
+            sessionStorage.removeItem('oauth_state');
+            localStorage.removeItem('oauth_state');
+            
             this.storeSessionData(response.sessionId, response.isPersistent);
             this.updateAuthState(response.isAuthenticated, response.isPersistent);
           }
@@ -173,9 +189,11 @@ export class AuthService {
   private clearAuthState() {
     sessionStorage.removeItem('sid');
     sessionStorage.removeItem('auth_time');
+    sessionStorage.removeItem('oauth_state');
     localStorage.removeItem('sid');
     localStorage.removeItem('auth_state');
     localStorage.removeItem('auth_time');
+    localStorage.removeItem('oauth_state');
     this.isAuthenticatedSignal.set(false);
     this.isPersistentSession.set(false);
   }
@@ -196,5 +214,11 @@ export class AuthService {
     
     this.isPersistentSession.set(isPersistent);
     this.isAuthenticatedSignal.set(true);
+  }
+
+  private generateState(): string {
+    const array = new Uint8Array(16);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 }
