@@ -41,11 +41,11 @@ export class AuthService {
     const timestamp = Date.now().toString();
     const state = this.generateState();
 
+    // Store state and timestamp
     sessionStorage.setItem('auth_time', timestamp);
     sessionStorage.setItem('oauth_state', state);
     localStorage.setItem('oauth_state', state);
 
-    // Make a request to our backend to get the authorization URL
     this.http
       .get(`${this.apiUrl}/bnet`, {
         params: {
@@ -57,11 +57,16 @@ export class AuthService {
       })
       .subscribe({
         next: (response: any) => {
-          // Perform the redirect in the browser
-          window.location.href = response.url;
+          if (response.url) {
+            console.log('Redirecting to:', response.url);
+            window.location.href = response.url;
+          } else {
+            console.error('No URL received from backend');
+          }
         },
         error: (error) => {
           console.error('Failed to initiate auth:', error);
+          // Handle error appropriately
         },
       });
   }
@@ -78,7 +83,7 @@ export class AuthService {
       return throwError(() => new Error('invalid_state'));
     }
 
-    // First try POST endpoint
+    // Only use POST method, remove GET fallback
     return this.http
       .post(
         `${this.apiUrl}/callback`,
@@ -93,23 +98,19 @@ export class AuthService {
           withCredentials: true,
           headers: {
             'Content-Type': 'application/json',
+            'X-Session-ID': sid || '',
+            'X-Storage-Type': storageType,
           },
         }
       )
       .pipe(
-        catchError((error) => {
-          console.error('POST callback failed, trying GET:', error);
-          // If POST fails, fallback to GET
-          return this.http.get(`${this.apiUrl}/callback`, {
-            params: { code, state },
-            withCredentials: true,
-          });
-        }),
         tap((response: any) => {
           if (response.isAuthenticated) {
+            // Clear OAuth state
             sessionStorage.removeItem('oauth_state');
             localStorage.removeItem('oauth_state');
 
+            // Store session data
             this.storeSessionData(response.sessionId, response.isPersistent);
             this.updateAuthState(
               response.isAuthenticated,
@@ -118,7 +119,7 @@ export class AuthService {
           }
         }),
         catchError((error) => {
-          console.error('OAuth Exchange Error:', error.error);
+          console.error('OAuth Exchange Error:', error);
           this.clearAuthState();
           throw error;
         })
@@ -138,6 +139,8 @@ export class AuthService {
       return of({ isAuthenticated: false, isPersistent: false });
     }
 
+    const storageType = hasLocalStorage ? 'local' : 'session';
+
     return this.http
       .get<{ isAuthenticated: boolean; isPersistent: boolean }>(
         `${this.apiUrl}/validate`,
@@ -145,15 +148,25 @@ export class AuthService {
           withCredentials: true,
           headers: {
             'X-Session-ID': sid,
-            'X-Storage-Type': hasLocalStorage ? 'local' : 'session',
+            'X-Storage-Type': storageType,
           },
         }
       )
       .pipe(
         tap((response) => {
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
+
+          // Update storage if needed
+          if (
+            response.isAuthenticated &&
+            response.isPersistent &&
+            !hasLocalStorage
+          ) {
+            this.storeSessionData(sid, true);
+          }
         }),
-        catchError(() => {
+        catchError((error) => {
+          console.error('Auth status check failed:', error);
           this.clearAuthState();
           return of({ isAuthenticated: false, isPersistent: false });
         })
