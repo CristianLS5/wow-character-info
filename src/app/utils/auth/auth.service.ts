@@ -67,31 +67,50 @@ export class AuthService {
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
+    const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
     const storedState =
       sessionStorage.getItem('oauth_state') ||
       localStorage.getItem('oauth_state');
+    const storageType = this.isPersistent() ? 'local' : 'session';
 
     if (!storedState || storedState !== state) {
       console.error('State mismatch:', { storedState, receivedState: state });
       return throwError(() => new Error('invalid_state'));
     }
 
+    // First try POST endpoint
     return this.http
       .post(
         `${this.apiUrl}/callback`,
         {
           code,
           state,
+          sessionId: sid,
+          storageType,
           storedState,
         },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       )
       .pipe(
+        catchError((error) => {
+          console.error('POST callback failed, trying GET:', error);
+          // If POST fails, fallback to GET
+          return this.http.get(`${this.apiUrl}/callback`, {
+            params: { code, state },
+            withCredentials: true,
+          });
+        }),
         tap((response: any) => {
           if (response.isAuthenticated) {
             sessionStorage.removeItem('oauth_state');
             localStorage.removeItem('oauth_state');
 
+            this.storeSessionData(response.sessionId, response.isPersistent);
             this.updateAuthState(
               response.isAuthenticated,
               response.isPersistent
@@ -99,8 +118,9 @@ export class AuthService {
           }
         }),
         catchError((error) => {
+          console.error('OAuth Exchange Error:', error.error);
           this.clearAuthState();
-          return throwError(() => error);
+          throw error;
         })
       );
   }
