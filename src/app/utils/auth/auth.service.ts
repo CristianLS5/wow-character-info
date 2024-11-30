@@ -38,40 +38,48 @@ export class AuthService {
   }
 
   login(consent: boolean = false): void {
+    const timestamp = Date.now().toString();
+    sessionStorage.setItem('auth_time', timestamp);
+    
     const params = new URLSearchParams({
       callback: this.frontendCallbackUrl,
       consent: consent.toString(),
+      timestamp
     });
     window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
+    const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
+    
     return this.http
       .post(
         `${this.apiUrl}/callback`,
-        { code, state },
-        {
+        { 
+          code, 
+          state,
+          sessionId: sid 
+        },
+        { 
           withCredentials: true,
           headers: {
             'Content-Type': 'application/json',
-          },
+            'X-Storage-Type': this.isPersistent() ? 'local' : 'session',
+            'X-Session-ID': sid || ''
+          }
         }
       )
       .pipe(
         tap((response: any) => {
-          console.log('OAuth callback response:', response);
           if (response.isAuthenticated) {
-            this.isAuthenticatedSignal.set(true);
+            this.storeSessionData(response.sessionId, response.isPersistent);
+            this.updateAuthState(response.isAuthenticated, response.isPersistent);
           }
         }),
-        catchError((error) => {
-          console.error('OAuth callback error:', error);
-          this.isAuthenticatedSignal.set(false);
-          throw {
-            error: error.error?.error || 'unknown_error',
-            message: error.error?.message || 'Unknown error occurred',
-            status: error.status,
-          };
+        catchError(error => {
+          console.error('OAuth Exchange Error:', error.error);
+          this.clearAuthState();
+          throw error;
         })
       );
   }
@@ -174,5 +182,19 @@ export class AuthService {
 
   isPersistent(): boolean {
     return this.isPersistentSession();
+  }
+
+  private storeSessionData(sessionId: string, isPersistent: boolean = false) {
+    if (isPersistent) {
+      localStorage.setItem('sid', sessionId);
+      localStorage.setItem('auth_state', 'true');
+      localStorage.setItem('auth_time', Date.now().toString());
+    } else {
+      sessionStorage.setItem('sid', sessionId);
+      sessionStorage.setItem('auth_time', Date.now().toString());
+    }
+    
+    this.isPersistentSession.set(isPersistent);
+    this.isAuthenticatedSignal.set(true);
   }
 }
