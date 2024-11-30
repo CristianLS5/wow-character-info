@@ -192,19 +192,23 @@ export class AuthService {
       .pipe(
         tap((response: any) => {
           if (response.isAuthenticated) {
+            // Store session ID
             sessionStorage.setItem('auth_time', Date.now().toString());
+            sessionStorage.setItem('sid', response.sessionId);
+            
             if (response.isPersistent) {
               localStorage.setItem('auth_state', 'true');
               localStorage.setItem('auth_time', Date.now().toString());
+              localStorage.setItem('sid', response.sessionId);
             }
+            this.updateAuthState(response.isAuthenticated, response.isPersistent);
           }
-          this.updateAuthState(response.isAuthenticated, response.isPersistent);
         })
       );
   }
 
   checkAuthStatus(): Observable<boolean> {
-    const sid = sessionStorage.getItem('sid');
+    const sid = localStorage.getItem('sid') || sessionStorage.getItem('sid');
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const hasSessionStorage = !!sessionStorage.getItem('auth_time');
 
