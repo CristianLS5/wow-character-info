@@ -83,7 +83,6 @@ export class AuthService {
       return throwError(() => new Error('invalid_state'));
     }
 
-    // Only use POST method, remove GET fallback
     return this.http
       .post(
         `${this.apiUrl}/callback`,
@@ -105,13 +104,16 @@ export class AuthService {
       )
       .pipe(
         tap((response: any) => {
+          console.log('OAuth callback response:', response);
           if (response.isAuthenticated) {
-            // Clear OAuth state
             sessionStorage.removeItem('oauth_state');
             localStorage.removeItem('oauth_state');
 
-            // Store session data
-            this.storeSessionData(response.sessionId, response.isPersistent);
+            // Store session data with the correct ID
+            this.storeSessionData(
+              response.sessionId || sid, // Use response sessionId if available
+              response.isPersistent
+            );
             this.updateAuthState(
               response.isAuthenticated,
               response.isPersistent
@@ -133,13 +135,12 @@ export class AuthService {
     const sid = localStorage.getItem('sid') || sessionStorage.getItem('sid');
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const hasSessionStorage = !!sessionStorage.getItem('auth_time');
+    const storageType = hasLocalStorage ? 'local' : 'session';
 
     if (!sid || (!hasLocalStorage && !hasSessionStorage)) {
       this.updateAuthState(false, false);
       return of({ isAuthenticated: false, isPersistent: false });
     }
-
-    const storageType = hasLocalStorage ? 'local' : 'session';
 
     return this.http
       .get<{ isAuthenticated: boolean; isPersistent: boolean }>(
@@ -154,6 +155,7 @@ export class AuthService {
       )
       .pipe(
         tap((response) => {
+          console.log('Auth status response:', response);
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
 
           // Update storage if needed
@@ -167,7 +169,10 @@ export class AuthService {
         }),
         catchError((error) => {
           console.error('Auth status check failed:', error);
-          this.clearAuthState();
+          if (error.status === 401) {
+            // Token expired or invalid, clear state
+            this.clearAuthState();
+          }
           return of({ isAuthenticated: false, isPersistent: false });
         })
       );
@@ -178,7 +183,13 @@ export class AuthService {
       .post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
       .pipe(
         tap(() => {
-          this.isAuthenticatedSignal.set(false);
+          this.clearAuthState();
+        }),
+        catchError((error) => {
+          console.error('Logout failed:', error);
+          // Clear state anyway
+          this.clearAuthState();
+          throw error;
         })
       );
   }
