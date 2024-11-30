@@ -51,6 +51,7 @@ export class AuthService {
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
     const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
+    const storageType = this.isPersistent() ? 'local' : 'session';
     
     return this.http
       .post(
@@ -58,14 +59,13 @@ export class AuthService {
         { 
           code, 
           state,
-          sessionId: sid 
+          sessionId: sid,
+          storageType
         },
         { 
           withCredentials: true,
           headers: {
-            'Content-Type': 'application/json',
-            'X-Storage-Type': this.isPersistent() ? 'local' : 'session',
-            'X-Session-ID': sid || ''
+            'Content-Type': 'application/json'
           }
         }
       )
