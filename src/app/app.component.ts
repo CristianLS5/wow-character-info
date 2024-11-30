@@ -20,7 +20,8 @@ export class AppComponent {
   
   showHeader = signal(false);
   showSubheader = computed(() => !!this.characterService.characterProfile());
-  isAuthInitialized = computed(() => this.authService.authInitializedSignal());
+  isAuthInitialized = computed(() => this.authService.isAuthCheckComplete());
+  isInitialized = computed(() => this.authService.isAuthCheckComplete());
 
   constructor(private router: Router) {
     this.router.events
