@@ -118,7 +118,7 @@ export class AuthService {
       );
   }
 
-  isAuthenticated() {
+  isAuthenticated(): boolean {
     return this.isAuthenticatedSignal();
   }
 
@@ -137,9 +137,7 @@ export class AuthService {
       }, 50);
 
       return () => clearInterval(checkInterval);
-    }).pipe(
-      map(() => true)
-    );
+    });
   }
 
   private updateAuthState(isAuthenticated: boolean, isPersistent: boolean = false) {
