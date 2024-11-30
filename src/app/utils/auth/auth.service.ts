@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -39,49 +39,65 @@ export class AuthService {
 
   login(consent: boolean = false): void {
     const timestamp = Date.now().toString();
-    sessionStorage.setItem('auth_time', timestamp);
+    const state = this.generateState();
     
-    const params = new URLSearchParams({
-      callback: this.frontendCallbackUrl,
-      consent: consent.toString(),
-      timestamp
+    sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('auth_time', timestamp);
+    localStorage.setItem('oauth_state', state);
+    
+    this.http.get<{ url: string }>(`${this.apiUrl}/bnet`, {
+      params: {
+        callback: this.frontendCallbackUrl,
+        consent: consent.toString(),
+        state,
+        timestamp
+      }
+    }).subscribe({
+      next: (response) => {
+        window.location.href = response.url;
+      },
+      error: (error) => {
+        console.error('Failed to initiate auth:', error);
+        this.router.navigate(['/'], { 
+          queryParams: { 
+            error: 'auth_init_failed',
+            message: 'Failed to start authentication'
+          }
+        });
+      }
     });
-    window.location.href = `${this.apiUrl}/bnet?${params.toString()}`;
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
-    const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
-    const storageType = this.isPersistent() ? 'local' : 'session';
+    const storedState = sessionStorage.getItem('oauth_state') || localStorage.getItem('oauth_state');
     
-    return this.http
-      .post(
-        `${this.apiUrl}/callback`,
-        { 
-          code, 
-          state,
-          sessionId: sid,
-          storageType
-        },
-        { 
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
+    if (!storedState || storedState !== state) {
+      console.error('State mismatch:', { storedState, receivedState: state });
+      return throwError(() => new Error('invalid_state'));
+    }
+
+    return this.http.post(
+      `${this.apiUrl}/callback`,
+      { 
+        code, 
+        state,
+        storedState
+      },
+      { withCredentials: true }
+    ).pipe(
+      tap((response: any) => {
+        if (response.isAuthenticated) {
+          sessionStorage.removeItem('oauth_state');
+          localStorage.removeItem('oauth_state');
+          
+          this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }
-      )
-      .pipe(
-        tap((response: any) => {
-          if (response.isAuthenticated) {
-            this.storeSessionData(response.sessionId, response.isPersistent);
-            this.updateAuthState(response.isAuthenticated, response.isPersistent);
-          }
-        }),
-        catchError(error => {
-          console.error('OAuth Exchange Error:', error.error);
-          this.clearAuthState();
-          throw error;
-        })
-      );
+      }),
+      catchError(error => {
+        this.clearAuthState();
+        return throwError(() => error);
+      })
+    );
   }
 
   checkAuthStatus(): Observable<{ isAuthenticated: boolean; isPersistent: boolean }> {
@@ -173,9 +189,11 @@ export class AuthService {
   private clearAuthState() {
     sessionStorage.removeItem('sid');
     sessionStorage.removeItem('auth_time');
+    sessionStorage.removeItem('oauth_state');
     localStorage.removeItem('sid');
     localStorage.removeItem('auth_state');
     localStorage.removeItem('auth_time');
+    localStorage.removeItem('oauth_state');
     this.isAuthenticatedSignal.set(false);
     this.isPersistentSession.set(false);
   }
@@ -196,5 +214,11 @@ export class AuthService {
     
     this.isPersistentSession.set(isPersistent);
     this.isAuthenticatedSignal.set(true);
+  }
+
+  private generateState(): string {
+    const array = new Uint8Array(16);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 }
