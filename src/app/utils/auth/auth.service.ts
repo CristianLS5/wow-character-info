@@ -140,6 +140,14 @@ export class AuthService {
     });
   }
 
+  isAuthCheckComplete(): boolean {
+    return this.authInitializedSignal();
+  }
+
+  getAuthInitializedSignal() {
+    return this.authInitializedSignal;
+  }
+
   private updateAuthState(isAuthenticated: boolean, isPersistent: boolean = false) {
     const hasLocalStorage = !!localStorage.getItem('auth_state');
     const hasSessionStorage = !!sessionStorage.getItem('auth_time');
