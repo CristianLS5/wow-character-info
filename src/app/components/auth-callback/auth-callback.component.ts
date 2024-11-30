@@ -18,7 +18,7 @@ export class AuthCallbackComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.group('🔄 Auth Callback Initialization');
+    console.group('� Auth Callback Initialization');
     console.time('authCallback');
 
     this.route.queryParams.subscribe((params) => {
@@ -35,13 +35,23 @@ export class AuthCallbackComponent implements OnInit {
 
       if (error) {
         console.error('OAuth Error:', error);
-        this.router.navigate(['/']);
+        this.router.navigate(['/'], {
+          queryParams: {
+            error: 'oauth_error',
+            message: error,
+          },
+        });
         return;
       }
 
       if (!code || !state) {
         console.warn('Missing required OAuth parameters');
-        this.router.navigate(['/']);
+        this.router.navigate(['/'], {
+          queryParams: {
+            error: 'missing_params',
+            message: 'Missing required OAuth parameters',
+          },
+        });
         return;
       }
 
@@ -51,28 +61,39 @@ export class AuthCallbackComponent implements OnInit {
           console.log('OAuth Exchange Success:', {
             isAuthenticated: response.isAuthenticated,
             isPersistent: response.isPersistent,
-            sessionId: response.sessionId
+            sessionId: response.sessionId,
           });
 
           if (response.isAuthenticated) {
-            const lastCharacter = this.characterService.getLastViewedCharacter();
+            const lastCharacter =
+              this.characterService.getLastViewedCharacter();
             const targetRoute = lastCharacter
               ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
               : '/dashboard';
 
             this.router.navigate([targetRoute]);
           } else {
-            this.router.navigate(['/']);
+            this.router.navigate(['/'], {
+              queryParams: {
+                error: 'auth_failed',
+                message: 'Authentication failed',
+              },
+            });
           }
         },
         error: (error) => {
           console.error('OAuth Exchange Error:', error);
-          this.router.navigate(['/']);
+          this.router.navigate(['/'], {
+            queryParams: {
+              error: error.error || 'exchange_failed',
+              message: error.message || 'OAuth exchange failed',
+            },
+          });
         },
         complete: () => {
           console.timeEnd('authCallback');
           console.groupEnd();
-        }
+        },
       });
     });
   }
