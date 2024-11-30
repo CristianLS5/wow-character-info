@@ -179,7 +179,7 @@ export class AuthService {
     // Always store in session storage
     sessionStorage.setItem('auth_time', Date.now().toString());
     sessionStorage.setItem('sid', sessionId);
-    
+
     // Store in localStorage if persistent
     if (isPersistent) {
       localStorage.setItem('auth_state', 'true');
@@ -193,20 +193,33 @@ export class AuthService {
       .post(
         `${this.apiUrl}/callback`,
         { code, state },
-        { 
+        {
           withCredentials: true,
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         }
       )
       .pipe(
         tap((response: any) => {
+          console.log('OAuth callback response:', response);
           if (response.isAuthenticated) {
             // Store session ID from response
             this.storeSessionData(response.sessionId, response.isPersistent);
-            this.updateAuthState(response.isAuthenticated, response.isPersistent);
+            this.updateAuthState(
+              response.isAuthenticated,
+              response.isPersistent
+            );
           }
+        }),
+        catchError((error) => {
+          console.error('OAuth callback error:', error);
+          // Include error details in the throw
+          throw {
+            error: error.error?.error || 'unknown_error',
+            message: error.error?.message || 'Unknown error occurred',
+            status: error.status,
+          };
         })
       );
   }
