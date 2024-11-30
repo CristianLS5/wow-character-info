@@ -36,10 +36,7 @@ export class AuthCallbackComponent implements OnInit {
       if (error) {
         console.error('OAuth Error:', error);
         this.router.navigate(['/'], {
-          queryParams: {
-            error: 'oauth_error',
-            message: error,
-          },
+          queryParams: { error: 'oauth_error', message: error },
         });
         return;
       }
@@ -55,14 +52,9 @@ export class AuthCallbackComponent implements OnInit {
         return;
       }
 
-      // Exchange code for session
       this.authService.handleOAuthCallback(code, state).subscribe({
         next: (response) => {
-          console.log('OAuth Exchange Success:', {
-            isAuthenticated: response.isAuthenticated,
-            isPersistent: response.isPersistent,
-            sessionId: response.sessionId,
-          });
+          console.log('OAuth Exchange Success:', response);
 
           if (response.isAuthenticated) {
             const lastCharacter =
