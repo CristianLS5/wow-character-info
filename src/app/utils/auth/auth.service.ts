@@ -182,6 +182,19 @@ export class AuthService {
       );
   }
 
+  private storeSessionData(sessionId: string, isPersistent: boolean) {
+    // Always store in session storage
+    sessionStorage.setItem('auth_time', Date.now().toString());
+    sessionStorage.setItem('sid', sessionId);
+    
+    // Store in localStorage if persistent
+    if (isPersistent) {
+      localStorage.setItem('auth_state', 'true');
+      localStorage.setItem('auth_time', Date.now().toString());
+      localStorage.setItem('sid', sessionId);
+    }
+  }
+
   handleOAuthCallback(code: string, state: string): Observable<any> {
     return this.http
       .post(
@@ -192,15 +205,7 @@ export class AuthService {
       .pipe(
         tap((response: any) => {
           if (response.isAuthenticated) {
-            // Store session ID
-            sessionStorage.setItem('auth_time', Date.now().toString());
-            sessionStorage.setItem('sid', response.sessionId);
-            
-            if (response.isPersistent) {
-              localStorage.setItem('auth_state', 'true');
-              localStorage.setItem('auth_time', Date.now().toString());
-              localStorage.setItem('sid', response.sessionId);
-            }
+            this.storeSessionData(response.sessionId, response.isPersistent);
             this.updateAuthState(response.isAuthenticated, response.isPersistent);
           }
         })
