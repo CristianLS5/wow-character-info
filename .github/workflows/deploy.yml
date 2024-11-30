@@ -1,0 +1,58 @@
+name: Deploy Frontend to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker image
+        run: |
+          docker build -t wow-frontend-image -f Dockerfile.prod .
+          docker save wow-frontend-image > wow-frontend-image.tar
+      
+      - name: Copy Docker image to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          target: "~/"
+          source: "wow-frontend-image.tar"
+          key: ${{ secrets.EC2_SSH_KEY }}
+      
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Load the new image
+            docker load < ~/wow-frontend-image.tar
+            
+            # Stop and remove existing container
+            docker stop wow-frontend || true
+            docker rm wow-frontend || true
+            
+            # Ensure network exists
+            docker network create wow-app-network || true
+            
+            # Run new container
+            docker run -d \
+              --name wow-frontend \
+              --network wow-app-network \
+              -p 3000:3000 \
+              --restart unless-stopped \
+              wow-frontend-image
+            
+            # Cleanup
+            rm ~/wow-frontend-image.tar
+            docker system prune -af --volumes
+            
+            # Verify deployment
+            echo "Checking if container is running..."
+            docker ps | grep wow-frontend
