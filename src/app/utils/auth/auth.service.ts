@@ -14,6 +14,7 @@ export class AuthService {
 
   private isAuthenticatedSignal = signal(false);
   private authInitializedSignal = signal(false);
+  private isPersistentSession = signal(false);
 
   constructor(private http: HttpClient, private router: Router) {
     this.initializeAuthState();
@@ -75,18 +76,34 @@ export class AuthService {
       );
   }
 
-  checkAuthStatus(): Observable<{ isAuthenticated: boolean }> {
+  checkAuthStatus(): Observable<{ isAuthenticated: boolean; isPersistent: boolean }> {
+    const sid = localStorage.getItem('sid') || sessionStorage.getItem('sid');
+    const hasLocalStorage = !!localStorage.getItem('auth_state');
+    const hasSessionStorage = !!sessionStorage.getItem('auth_time');
+
+    if (!sid || (!hasLocalStorage && !hasSessionStorage)) {
+      this.updateAuthState(false, false);
+      return of({ isAuthenticated: false, isPersistent: false });
+    }
+
     return this.http
-      .get<{ isAuthenticated: boolean }>(`${this.apiUrl}/validate`, {
-        withCredentials: true,
-      })
+      .get<{ isAuthenticated: boolean; isPersistent: boolean }>(
+        `${this.apiUrl}/validate`,
+        {
+          withCredentials: true,
+          headers: {
+            'X-Session-ID': sid,
+            'X-Storage-Type': hasLocalStorage ? 'local' : 'session'
+          }
+        }
+      )
       .pipe(
         tap((response) => {
-          this.isAuthenticatedSignal.set(response.isAuthenticated);
+          this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }),
         catchError(() => {
-          this.isAuthenticatedSignal.set(false);
-          return of({ isAuthenticated: false });
+          this.clearAuthState();
+          return of({ isAuthenticated: false, isPersistent: false });
         })
       );
   }
@@ -120,6 +137,36 @@ export class AuthService {
       }, 50);
 
       return () => clearInterval(checkInterval);
-    });
+    }).pipe(
+      map(() => true)
+    );
+  }
+
+  private updateAuthState(isAuthenticated: boolean, isPersistent: boolean = false) {
+    const hasLocalStorage = !!localStorage.getItem('auth_state');
+    const hasSessionStorage = !!sessionStorage.getItem('auth_time');
+
+    if (isPersistent && !hasLocalStorage) {
+      isAuthenticated = false;
+    } else if (!isPersistent && !hasSessionStorage) {
+      isAuthenticated = false;
+    }
+
+    this.isAuthenticatedSignal.set(isAuthenticated);
+    this.isPersistentSession.set(isPersistent);
+  }
+
+  private clearAuthState() {
+    sessionStorage.removeItem('sid');
+    sessionStorage.removeItem('auth_time');
+    localStorage.removeItem('sid');
+    localStorage.removeItem('auth_state');
+    localStorage.removeItem('auth_time');
+    this.isAuthenticatedSignal.set(false);
+    this.isPersistentSession.set(false);
+  }
+
+  isPersistent(): boolean {
+    return this.isPersistentSession();
   }
 }
