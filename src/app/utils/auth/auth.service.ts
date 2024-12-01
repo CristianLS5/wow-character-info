@@ -70,15 +70,17 @@ export class AuthService {
     this.clearAuthState();
 
     // Store state and timestamp in the appropriate storage
-    if (consent) {
-      localStorage.setItem('auth_time', timestamp);
-      localStorage.setItem('oauth_state', state);
-      localStorage.setItem('storage_type', 'local');
-    } else {
-      sessionStorage.setItem('auth_time', timestamp);
-      sessionStorage.setItem('oauth_state', state);
-      sessionStorage.setItem('storage_type', 'session');
-    }
+    const storage = consent ? localStorage : sessionStorage;
+    storage.setItem('auth_time', timestamp);
+    storage.setItem('oauth_state', state);
+    storage.setItem('storage_type', storageType);
+
+    console.log('Starting login with:', {
+      consent,
+      storageType,
+      state,
+      timestamp
+    });
 
     this.http
       .get(`${this.apiUrl}/bnet`, {
@@ -109,7 +111,7 @@ export class AuthService {
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
-    const storageType = sessionStorage.getItem('auth_storage_type') || 'session';
+    const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type') || 'session';
     const storedState = storageType === 'local' 
       ? localStorage.getItem('oauth_state')
       : sessionStorage.getItem('oauth_state');
@@ -118,7 +120,9 @@ export class AuthService {
       code: code ? 'present' : 'missing',
       state,
       storedState,
-      storageType
+      storageType,
+      localStorageState: localStorage.getItem('oauth_state'),
+      sessionStorageState: sessionStorage.getItem('oauth_state')
     });
 
     if (!storedState || storedState !== state) {
@@ -145,7 +149,12 @@ export class AuthService {
             // Clear OAuth states
             sessionStorage.removeItem('oauth_state');
             localStorage.removeItem('oauth_state');
-            sessionStorage.removeItem('auth_storage_type');
+
+            // Store auth state in the correct storage
+            const storage = response.isPersistent ? localStorage : sessionStorage;
+            storage.setItem('auth_state', 'true');
+            storage.setItem('auth_time', Date.now().toString());
+            storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
 
             // Update auth state
             this.updateAuthState(
@@ -167,12 +176,8 @@ export class AuthService {
     const localAuth = localStorage.getItem('auth_state') === 'true';
     const sessionAuth = sessionStorage.getItem('auth_state') === 'true';
     
-    // Determine storage type - if auth_state is in localStorage, default to 'local'
-    let storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
-    if (localAuth && !storageType) {
-      storageType = 'local';
-      localStorage.setItem('storage_type', 'local'); // Fix missing storage type
-    }
+    // Determine which storage to use
+    const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
     
     console.log('Checking auth status:', {
       localAuth,
@@ -199,11 +204,6 @@ export class AuthService {
       .pipe(
         tap(response => {
           console.log('Auth validation response:', response);
-          if (response.isAuthenticated) {
-            // Ensure storage type is set
-            const storage = response.isPersistent ? localStorage : sessionStorage;
-            storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
-          }
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }),
         catchError(error => {
@@ -266,13 +266,12 @@ export class AuthService {
   ) {
     console.log('Updating auth state:', { isAuthenticated, isPersistent });
     
-    const storageType = isPersistent ? 'local' : 'session';
     const storage = isPersistent ? localStorage : sessionStorage;
     
     if (isAuthenticated) {
       storage.setItem('auth_state', 'true');
       storage.setItem('auth_time', Date.now().toString());
-      storage.setItem('storage_type', storageType);
+      storage.setItem('storage_type', isPersistent ? 'local' : 'session');
     }
 
     // Set signals after storage is updated
