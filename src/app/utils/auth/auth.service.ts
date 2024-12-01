@@ -85,17 +85,24 @@ export class AuthService {
     // Clear any existing auth states first
     this.clearAuthState();
 
-    // Store state and timestamp in the appropriate storage
+    // Store state in both storages to ensure it's available during callback
+    localStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('oauth_state', state);
+    
+    // Store other auth data in the appropriate storage
     const storage = consent ? localStorage : sessionStorage;
     storage.setItem('auth_time', timestamp);
-    storage.setItem('oauth_state', state);
     storage.setItem('storage_type', storageType);
 
     console.log('Starting login with:', {
       consent,
       storageType,
       state,
-      timestamp
+      timestamp,
+      storedStates: {
+        local: localStorage.getItem('oauth_state'),
+        session: sessionStorage.getItem('oauth_state')
+      }
     });
 
     this.http
@@ -112,7 +119,14 @@ export class AuthService {
       .subscribe({
         next: (response: any) => {
           if (response.url) {
-            console.log('Redirecting to auth with storage type:', storageType);
+            console.log('Redirecting to auth with:', {
+              storageType,
+              state,
+              storedStates: {
+                local: localStorage.getItem('oauth_state'),
+                session: sessionStorage.getItem('oauth_state')
+              }
+            });
             window.location.href = response.url;
           } else {
             console.error('No URL received from backend');
@@ -127,22 +141,29 @@ export class AuthService {
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
+    // Check both storages for the state
+    const storedStateLocal = localStorage.getItem('oauth_state');
+    const storedStateSession = sessionStorage.getItem('oauth_state');
     const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type') || 'session';
-    const storedState = storageType === 'local' 
-      ? localStorage.getItem('oauth_state')
-      : sessionStorage.getItem('oauth_state');
 
     console.log('Handling OAuth callback:', {
       code: code ? 'present' : 'missing',
       state,
-      storedState,
-      storageType,
-      localStorageState: localStorage.getItem('oauth_state'),
-      sessionStorageState: sessionStorage.getItem('oauth_state')
+      storedStates: {
+        local: storedStateLocal,
+        session: storedStateSession
+      },
+      storageType
     });
 
-    if (!storedState || storedState !== state) {
-      console.error('State mismatch:', { storedState, receivedState: state });
+    // Check if state matches either storage
+    if ((!storedStateLocal && !storedStateSession) || 
+        (state !== storedStateLocal && state !== storedStateSession)) {
+      console.error('State mismatch:', {
+        storedStateLocal,
+        storedStateSession,
+        receivedState: state
+      });
       return throwError(() => new Error('invalid_state'));
     }
 
@@ -162,9 +183,9 @@ export class AuthService {
         tap((response: any) => {
           console.log('OAuth callback response:', response);
           if (response.isAuthenticated) {
-            // Clear OAuth states
-            sessionStorage.removeItem('oauth_state');
+            // Clear OAuth states from both storages
             localStorage.removeItem('oauth_state');
+            sessionStorage.removeItem('oauth_state');
 
             // Store auth state in the correct storage
             const storage = response.isPersistent ? localStorage : sessionStorage;
