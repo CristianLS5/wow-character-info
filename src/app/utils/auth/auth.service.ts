@@ -27,11 +27,17 @@ export class AuthService {
     const hasLocalAuth = localStorage.getItem('auth_state') === 'true';
     const localAuthTime = localStorage.getItem('auth_time');
     const hasSessionAuth = sessionStorage.getItem('auth_time');
+    
+    // If we have local auth but no storage type, set it
+    if (hasLocalAuth && !localStorage.getItem('storage_type')) {
+      localStorage.setItem('storage_type', 'local');
+    }
 
     console.log('Initial auth state check:', {
       hasLocalAuth,
       localAuthTime,
-      hasSessionAuth
+      hasSessionAuth,
+      storageType: localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type')
     });
 
     if (hasLocalAuth || hasSessionAuth) {
@@ -161,8 +167,12 @@ export class AuthService {
     const localAuth = localStorage.getItem('auth_state') === 'true';
     const sessionAuth = sessionStorage.getItem('auth_state') === 'true';
     
-    // Determine which storage type to use
-    const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
+    // Determine storage type - if auth_state is in localStorage, default to 'local'
+    let storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
+    if (localAuth && !storageType) {
+      storageType = 'local';
+      localStorage.setItem('storage_type', 'local'); // Fix missing storage type
+    }
     
     console.log('Checking auth status:', {
       localAuth,
@@ -189,6 +199,11 @@ export class AuthService {
       .pipe(
         tap(response => {
           console.log('Auth validation response:', response);
+          if (response.isAuthenticated) {
+            // Ensure storage type is set
+            const storage = response.isPersistent ? localStorage : sessionStorage;
+            storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
+          }
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }),
         catchError(error => {
@@ -266,7 +281,7 @@ export class AuthService {
     this.authInitializedSignal.set(true);
   }
 
-  public clearAuthState() {
+  private clearAuthState() {
     // Clear both storages to ensure clean state
     const itemsToClear = [
       'oauth_state',
