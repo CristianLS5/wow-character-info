@@ -37,6 +37,10 @@ export class LandingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.slideContainer = document.querySelector('.carousel');
     this.startSlideShow();
+
+    // Check current storage type
+    const storageType = this.checkStorageType();
+    console.log('Current storage type:', storageType);
   }
 
   ngOnDestroy() {
@@ -92,16 +96,27 @@ export class LandingComponent implements OnInit, OnDestroy {
   }
 
   updateConsent(consent: boolean) {
-    // Close modal first
+    console.log('Updating consent:', {
+      consent,
+      currentStorage: localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type')
+    });
+    
     this.showConsentModal = false;
     
-    // Start login process with consent value
+    this.authService.resetAuth();
+    
     this.authService.login(consent);
   }
 
-  private isNewTab(): boolean {
-    // Check if this tab was created after the authentication
-    const authTime = sessionStorage.getItem('auth_time');
-    return !authTime;
+  private checkStorageType(): 'local' | 'session' | null {
+    if (localStorage.getItem('storage_type') === 'local') {
+      return 'local';
+    }
+    if (sessionStorage.getItem('storage_type') === 'session') {
+      return 'session';
+    }
+    return null;
   }
+
+
 }

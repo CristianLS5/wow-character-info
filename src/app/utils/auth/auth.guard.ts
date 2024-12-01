@@ -23,27 +23,37 @@ export class AuthGuard implements CanActivate {
           isAuthenticated,
           path: route.routeConfig?.path,
           requiresAuth: route.data['requiresAuth'],
-          params: route.params
+          params: route.params,
+          isPersistent: this.authService.isPersistent()
         });
+
+        // Landing page logic
+        if (route.routeConfig?.path === '') {
+          if (isAuthenticated) {
+            const lastCharacter = this.characterService.getLastViewedCharacter();
+            console.log('Last character:', lastCharacter);
+            
+            if (lastCharacter) {
+              this.router.navigate([
+                lastCharacter.realm,
+                lastCharacter.name,
+                'character'
+              ]);
+            } else {
+              this.router.navigate(['/dashboard']);
+            }
+            return false;
+          }
+          return true; // Allow access to landing page if not authenticated
+        }
 
         // Handle direct navigation to character routes
         if (route.params['realm'] && route.params['character']) {
-          return isAuthenticated;
-        }
-
-        // Landing page logic
-        if (route.routeConfig?.path === '' && isAuthenticated) {
-          const lastCharacter = this.characterService.getLastViewedCharacter();
-          if (lastCharacter) {
-            this.router.navigate([
-              lastCharacter.realm,
-              lastCharacter.name,
-              'character'
-            ]);
-          } else {
-            this.router.navigate(['/dashboard']);
+          if (!isAuthenticated) {
+            this.router.navigate(['/']);
+            return false;
           }
-          return false;
+          return true;
         }
 
         // Auth required routes
