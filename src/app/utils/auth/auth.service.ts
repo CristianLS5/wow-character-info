@@ -101,11 +101,7 @@ export class AuthService {
     return this.http
       .post(
         `${this.apiUrl}/callback`,
-        {
-          code,
-          state,
-          storageType
-        },
+        { code, state, storageType },
         {
           withCredentials: true,
           headers: {
@@ -123,6 +119,7 @@ export class AuthService {
             localStorage.removeItem('oauth_state');
             sessionStorage.removeItem('auth_storage_type');
 
+            // Update auth state
             this.updateAuthState(
               response.isAuthenticated,
               response.isPersistent
@@ -237,17 +234,19 @@ export class AuthService {
     isAuthenticated: boolean,
     isPersistent: boolean = false
   ) {
-    const hasLocalStorage = !!localStorage.getItem('auth_state');
-    const hasSessionStorage = !!sessionStorage.getItem('auth_time');
-
-    if (isPersistent && !hasLocalStorage) {
-      isAuthenticated = false;
-    } else if (!isPersistent && !hasSessionStorage) {
-      isAuthenticated = false;
+    console.log('Updating auth state:', { isAuthenticated, isPersistent });
+    
+    if (isPersistent) {
+      localStorage.setItem('auth_state', 'true');
+      localStorage.setItem('auth_time', Date.now().toString());
+    } else {
+      sessionStorage.setItem('auth_time', Date.now().toString());
     }
 
-    this.isAuthenticatedSignal.set(isAuthenticated);
+    // Set signals after storage is updated
     this.isPersistentSession.set(isPersistent);
+    this.isAuthenticatedSignal.set(isAuthenticated);
+    this.authInitializedSignal.set(true);
   }
 
   private clearAuthState() {
@@ -284,5 +283,27 @@ export class AuthService {
     return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
       ''
     );
+  }
+
+  // Add a method to wait for auth state to be ready
+  waitForAuthReady(): Observable<boolean> {
+    return new Observable<boolean>(subscriber => {
+      const maxAttempts = 50; // 5 seconds maximum
+      let attempts = 0;
+      
+      const checkAuth = setInterval(() => {
+        attempts++;
+        if (this.isAuthCheckComplete()) {
+          subscriber.next(this.isAuthenticated());
+          subscriber.complete();
+          clearInterval(checkAuth);
+        } else if (attempts >= maxAttempts) {
+          subscriber.error(new Error('Auth check timeout'));
+          clearInterval(checkAuth);
+        }
+      }, 100);
+
+      return () => clearInterval(checkAuth);
+    });
   }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from './auth.service';
 import { Observable, of } from 'rxjs';
-import { take, switchMap } from 'rxjs/operators';
+import { take, switchMap, map } from 'rxjs/operators';
 import { CharacterService } from '../../services/character.service';
 
 @Injectable({
@@ -16,13 +16,11 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
-    return this.authService.isAuthInitialized().pipe(
+    return this.authService.waitForAuthReady().pipe(
       take(1),
-      switchMap(() => this.authService.checkAuthStatus()),
-      take(1),
-      switchMap(authState => {
+      map(isAuthenticated => {
         console.log('Auth guard check:', {
-          isAuthenticated: authState.isAuthenticated,
+          isAuthenticated,
           path: route.routeConfig?.path,
           requiresAuth: route.data['requiresAuth'],
           params: route.params
@@ -30,11 +28,11 @@ export class AuthGuard implements CanActivate {
 
         // Handle direct navigation to character routes
         if (route.params['realm'] && route.params['character']) {
-          return of(authState.isAuthenticated);
+          return isAuthenticated;
         }
 
         // Landing page logic
-        if (route.routeConfig?.path === '' && authState.isAuthenticated) {
+        if (route.routeConfig?.path === '' && isAuthenticated) {
           const lastCharacter = this.characterService.getLastViewedCharacter();
           if (lastCharacter) {
             this.router.navigate([
@@ -45,17 +43,17 @@ export class AuthGuard implements CanActivate {
           } else {
             this.router.navigate(['/dashboard']);
           }
-          return of(false);
+          return false;
         }
 
         // Auth required routes
-        if (route.data['requiresAuth'] !== false && !authState.isAuthenticated) {
+        if (route.data['requiresAuth'] !== false && !isAuthenticated) {
           console.log('Access denied - not authenticated');
           this.router.navigate(['/']);
-          return of(false);
+          return false;
         }
 
-        return of(true);
+        return true;
       })
     );
   }
