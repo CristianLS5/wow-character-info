@@ -24,7 +24,12 @@ export class AuthGuard implements CanActivate {
           path: route.routeConfig?.path,
           requiresAuth: route.data['requiresAuth'],
           params: route.params,
-          isPersistent: this.authService.isPersistent()
+          isPersistent: this.authService.isPersistent(),
+          storageState: {
+            authState: localStorage.getItem('auth_state'),
+            storageType: localStorage.getItem('storage_type'),
+            lastCharacter: localStorage.getItem('last_character')
+          }
         });
 
         // Landing page logic

@@ -21,14 +21,23 @@ export class LandingComponent implements OnInit, OnDestroy {
     effect(() => {
       if (this.authService.isAuthCheckComplete()) {
         const isAuthenticated = this.authService.isAuthenticated();
+        const lastCharacter = localStorage.getItem('last_character');
+        
         console.log('Landing auth check:', {
           isAuthenticated,
-          hasSessionStorage: !!sessionStorage.getItem('auth_time'),
-          hasLocalStorage: !!localStorage.getItem('auth_state')
+          hasLastCharacter: !!lastCharacter,
+          lastCharacter: lastCharacter ? JSON.parse(lastCharacter) : null,
+          storageType: localStorage.getItem('storage_type'),
+          authState: localStorage.getItem('auth_state')
         });
 
         if (isAuthenticated) {
-          this.router.navigate(['/character']);
+          if (lastCharacter) {
+            const { realm, name } = JSON.parse(lastCharacter);
+            this.router.navigate([`/${realm}/${name}/character`]);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
         }
       }
     });

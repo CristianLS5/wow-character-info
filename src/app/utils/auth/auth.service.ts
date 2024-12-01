@@ -23,29 +23,45 @@ export class AuthService {
   private initializeAuthState() {
     console.log('Initializing auth state');
 
-    // Check local storage first
-    const hasLocalAuth = localStorage.getItem('auth_state') === 'true';
-    const localAuthTime = localStorage.getItem('auth_time');
-    const hasSessionAuth = sessionStorage.getItem('auth_time');
-    
-    // If we have local auth but no storage type, set it
-    if (hasLocalAuth && !localStorage.getItem('storage_type')) {
-      localStorage.setItem('storage_type', 'local');
-    }
+    // Check both storages for auth state and related data
+    const localStorageData = {
+      authState: localStorage.getItem('auth_state') === 'true',
+      authTime: localStorage.getItem('auth_time'),
+      storageType: localStorage.getItem('storage_type'),
+      lastCharacter: localStorage.getItem('last_character')
+    };
+
+    const sessionStorageData = {
+      authState: sessionStorage.getItem('auth_state') === 'true',
+      authTime: sessionStorage.getItem('auth_time'),
+      storageType: sessionStorage.getItem('storage_type')
+    };
 
     console.log('Initial auth state check:', {
-      hasLocalAuth,
-      localAuthTime,
-      hasSessionAuth,
-      storageType: localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type')
+      local: localStorageData,
+      session: sessionStorageData
     });
 
-    if (hasLocalAuth || hasSessionAuth) {
+    // Determine if we have a valid auth state
+    const hasValidAuth = (localStorageData.storageType === 'local' && localStorageData.authState) ||
+                        (sessionStorageData.storageType === 'session' && sessionStorageData.authState);
+
+    if (hasValidAuth) {
       this.checkAuthStatus().subscribe({
         next: (response) => {
           console.log('Initial auth check response:', response);
+          const isPersistent = localStorageData.storageType === 'local';
+          
+          if (response.isAuthenticated) {
+            // Ensure storage is consistent
+            const storage = isPersistent ? localStorage : sessionStorage;
+            storage.setItem('auth_state', 'true');
+            storage.setItem('auth_time', Date.now().toString());
+            storage.setItem('storage_type', isPersistent ? 'local' : 'session');
+          }
+
           this.isAuthenticatedSignal.set(response.isAuthenticated);
-          this.isPersistentSession.set(response.isPersistent);
+          this.isPersistentSession.set(isPersistent);
           this.authInitializedSignal.set(true);
         },
         error: (error) => {
@@ -55,8 +71,8 @@ export class AuthService {
         },
       });
     } else {
-      this.isAuthenticatedSignal.set(false);
-      this.isPersistentSession.set(false);
+      console.log('No valid auth state found');
+      this.clearAuthState();
       this.authInitializedSignal.set(true);
     }
   }
@@ -173,21 +189,31 @@ export class AuthService {
 
   checkAuthStatus(): Observable<{ isAuthenticated: boolean; isPersistent: boolean }> {
     // Check both storages for auth state
-    const localAuth = localStorage.getItem('auth_state') === 'true';
-    const sessionAuth = sessionStorage.getItem('auth_state') === 'true';
-    
-    // Determine which storage to use
-    const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
+    const localAuth = {
+      authState: localStorage.getItem('auth_state') === 'true',
+      storageType: localStorage.getItem('storage_type'),
+      authTime: localStorage.getItem('auth_time')
+    };
+
+    const sessionAuth = {
+      authState: sessionStorage.getItem('auth_state') === 'true',
+      storageType: sessionStorage.getItem('storage_type'),
+      authTime: sessionStorage.getItem('auth_time')
+    };
+
+    // Determine which storage to use based on storage_type
+    const isPersistent = localAuth.storageType === 'local';
+    const hasValidAuth = (isPersistent && localAuth.authState) || 
+                        (!isPersistent && sessionAuth.authState);
     
     console.log('Checking auth status:', {
       localAuth,
       sessionAuth,
-      storageType,
-      localTime: localStorage.getItem('auth_time'),
-      sessionTime: sessionStorage.getItem('auth_time')
+      isPersistent,
+      hasValidAuth
     });
 
-    if (!localAuth && !sessionAuth) {
+    if (!hasValidAuth) {
       return of({ isAuthenticated: false, isPersistent: false });
     }
 
@@ -197,13 +223,19 @@ export class AuthService {
         {
           withCredentials: true,
           headers: {
-            'X-Storage-Type': storageType || 'session'
+            'X-Storage-Type': isPersistent ? 'local' : 'session'
           },
         }
       )
       .pipe(
         tap(response => {
           console.log('Auth validation response:', response);
+          if (response.isAuthenticated) {
+            const storage = response.isPersistent ? localStorage : sessionStorage;
+            storage.setItem('auth_state', 'true');
+            storage.setItem('auth_time', Date.now().toString());
+            storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
+          }
           this.updateAuthState(response.isAuthenticated, response.isPersistent);
         }),
         catchError(error => {
