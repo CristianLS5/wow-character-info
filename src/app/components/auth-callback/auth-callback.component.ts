@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../utils/auth/auth.service';
 import { CharacterService } from '../../services/character.service';
 import { take, map, tap, switchMap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-auth-callback',
@@ -52,7 +53,15 @@ export class AuthCallbackComponent implements OnInit {
             throw error;
           })
         )
-      )
+      ),
+      switchMap(response => {
+        if (response.isAuthenticated) {
+          return this.authService.waitForAuthReady().pipe(
+            map(() => response)
+          );
+        }
+        return of(response);
+      })
     ).subscribe({
       next: (response) => {
         if (response.isAuthenticated) {
@@ -61,10 +70,13 @@ export class AuthCallbackComponent implements OnInit {
             ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
             : '/dashboard';
 
-          // Small delay to ensure all states are properly set
-          setTimeout(() => {
-            this.router.navigate([targetRoute]);
-          }, 100);
+          console.log('Navigation after auth:', {
+            targetRoute,
+            isAuthenticated: this.authService.isAuthenticated(),
+            authInitialized: this.authService.isAuthCheckComplete()
+          });
+
+          this.router.navigate([targetRoute]);
         } else {
           this.handleAuthError('Authentication failed');
         }
