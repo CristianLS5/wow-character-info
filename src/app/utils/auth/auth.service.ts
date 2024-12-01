@@ -40,11 +40,19 @@ export class AuthService {
   login(consent: boolean = false): void {
     const timestamp = Date.now().toString();
     const state = this.generateState();
+    const storageType = consent ? 'local' : 'session';
 
-    // Store state and timestamp
-    sessionStorage.setItem('auth_time', timestamp);
-    sessionStorage.setItem('oauth_state', state);
-    localStorage.setItem('oauth_state', state);
+    // Store state and timestamp in the appropriate storage
+    if (consent) {
+      localStorage.setItem('auth_time', timestamp);
+      localStorage.setItem('oauth_state', state);
+    } else {
+      sessionStorage.setItem('auth_time', timestamp);
+      sessionStorage.setItem('oauth_state', state);
+    }
+
+    // Store storage type preference
+    sessionStorage.setItem('auth_storage_type', storageType);
 
     this.http
       .get(`${this.apiUrl}/bnet`, {
@@ -54,6 +62,7 @@ export class AuthService {
           timestamp,
           state,
         },
+        withCredentials: true
       })
       .subscribe({
         next: (response: any) => {
@@ -66,17 +75,23 @@ export class AuthService {
         },
         error: (error) => {
           console.error('Failed to initiate auth:', error);
-          // Handle error appropriately
+          this.clearAuthState();
         },
       });
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
-    const sid = sessionStorage.getItem('sid') || localStorage.getItem('sid');
-    const storedState =
-      sessionStorage.getItem('oauth_state') ||
-      localStorage.getItem('oauth_state');
-    const storageType = this.isPersistent() ? 'local' : 'session';
+    const storageType = sessionStorage.getItem('auth_storage_type') || 'session';
+    const storedState = storageType === 'local' 
+      ? localStorage.getItem('oauth_state')
+      : sessionStorage.getItem('oauth_state');
+
+    console.log('Handling OAuth callback:', {
+      code: code ? 'present' : 'missing',
+      state,
+      storedState,
+      storageType
+    });
 
     if (!storedState || storedState !== state) {
       console.error('State mismatch:', { storedState, receivedState: state });
@@ -89,16 +104,13 @@ export class AuthService {
         {
           code,
           state,
-          sessionId: sid,
-          storageType,
-          storedState,
+          storageType
         },
         {
           withCredentials: true,
           headers: {
             'Content-Type': 'application/json',
-            'X-Session-ID': sid || '',
-            'X-Storage-Type': storageType,
+            'X-Storage-Type': storageType
           },
         }
       )
@@ -106,14 +118,11 @@ export class AuthService {
         tap((response: any) => {
           console.log('OAuth callback response:', response);
           if (response.isAuthenticated) {
+            // Clear OAuth states
             sessionStorage.removeItem('oauth_state');
             localStorage.removeItem('oauth_state');
+            sessionStorage.removeItem('auth_storage_type');
 
-            // Store session data with the correct ID
-            this.storeSessionData(
-              response.sessionId || sid, // Use response sessionId if available
-              response.isPersistent
-            );
             this.updateAuthState(
               response.isAuthenticated,
               response.isPersistent
@@ -242,13 +251,11 @@ export class AuthService {
   }
 
   private clearAuthState() {
-    sessionStorage.removeItem('sid');
-    sessionStorage.removeItem('auth_time');
     sessionStorage.removeItem('oauth_state');
-    localStorage.removeItem('sid');
-    localStorage.removeItem('auth_state');
-    localStorage.removeItem('auth_time');
     localStorage.removeItem('oauth_state');
+    sessionStorage.removeItem('auth_time');
+    localStorage.removeItem('auth_time');
+    sessionStorage.removeItem('auth_storage_type');
     this.isAuthenticatedSignal.set(false);
     this.isPersistentSession.set(false);
   }

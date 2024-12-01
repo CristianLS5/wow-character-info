@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../utils/auth/auth.service';
 import { CharacterService } from '../../services/character.service';
-import { take, map, tap, switchMap } from 'rxjs/operators';
+import { take, map, tap, switchMap, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-auth-callback',
@@ -27,17 +27,14 @@ export class AuthCallbackComponent implements OnInit {
         code: params['code'],
         state: params['state'],
         error: params['error'],
-        errorDescription: params['error_description'],
-        timestamp: new Date().toISOString()
+        errorDescription: params['error_description']
       })),
       tap(params => {
-        console.log('Received OAuth Callback:', {
-          code: params.code ? 'present' : 'missing',
-          state: params.state ? 'present' : 'missing',
+        console.log('OAuth Callback Params:', {
+          hasCode: !!params.code,
+          hasState: !!params.state,
           error: params.error,
-          errorDescription: params.errorDescription,
-          timestamp: params.timestamp,
-          authTime: sessionStorage.getItem('auth_time')
+          errorDescription: params.errorDescription
         });
 
         if (params.error) {
@@ -47,10 +44,15 @@ export class AuthCallbackComponent implements OnInit {
         if (!params.code || !params.state) {
           throw new Error('Missing required OAuth parameters');
         }
-
-        return params;
       }),
-      switchMap(params => this.authService.handleOAuthCallback(params.code, params.state))
+      switchMap(params => 
+        this.authService.handleOAuthCallback(params.code, params.state).pipe(
+          catchError(error => {
+            console.error('OAuth callback error:', error);
+            throw error;
+          })
+        )
+      )
     ).subscribe({
       next: (response) => {
         if (response.isAuthenticated) {
@@ -58,14 +60,18 @@ export class AuthCallbackComponent implements OnInit {
           const targetRoute = lastCharacter
             ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
             : '/dashboard';
-          this.router.navigate([targetRoute]);
+
+          // Small delay to ensure all states are properly set
+          setTimeout(() => {
+            this.router.navigate([targetRoute]);
+          }, 100);
         } else {
           this.handleAuthError('Authentication failed');
         }
       },
       error: (error) => {
-        console.error('OAuth Exchange Error:', error);
-        this.handleAuthError(error.message || 'OAuth exchange failed');
+        console.error('Auth callback error:', error);
+        this.handleAuthError(error.message || 'Authentication failed');
       }
     });
   }
