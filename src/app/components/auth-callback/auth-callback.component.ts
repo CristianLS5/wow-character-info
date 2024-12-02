@@ -4,6 +4,8 @@ import { AuthService } from '../../utils/auth/auth.service';
 import { CharacterService } from '../../services/character.service';
 import { take, map, tap, switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-auth-callback',
@@ -12,11 +14,14 @@ import { of } from 'rxjs';
   templateUrl: './auth-callback.component.html',
 })
 export class AuthCallbackComponent implements OnInit {
+  private apiUrl = `${environment.apiUrl}/auth`;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private authService: AuthService,
-    private characterService: CharacterService
+    private characterService: CharacterService,
+    private http: HttpClient
   ) { }
 
   ngOnInit() {
@@ -65,6 +70,10 @@ export class AuthCallbackComponent implements OnInit {
     ).subscribe({
       next: (response) => {
         if (response.isAuthenticated) {
+          const storage = response.isPersistent ? localStorage : sessionStorage;
+          storage.setItem('session_id', response.sessionId);
+          storage.setItem('storage_type', response.storageType);
+          
           const lastCharacter = this.characterService.getLastViewedCharacter();
           const targetRoute = lastCharacter
             ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
@@ -73,7 +82,9 @@ export class AuthCallbackComponent implements OnInit {
           console.log('Navigation after auth:', {
             targetRoute,
             isAuthenticated: this.authService.isAuthenticated(),
-            authInitialized: this.authService.isAuthCheckComplete()
+            authInitialized: this.authService.isAuthCheckComplete(),
+            sessionId: response.sessionId,
+            storageType: response.storageType
           });
 
           this.router.navigate([targetRoute]);
