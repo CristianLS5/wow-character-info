@@ -85,28 +85,8 @@ export class AuthService {
     // Clear any existing auth states first
     this.clearAuthState();
 
-    // Store state in both storages to ensure it's available during callback
-    localStorage.setItem('oauth_state', state);
-    sessionStorage.setItem('oauth_state', state);
-    
-    // Store other auth data in the appropriate storage
-    const storage = consent ? localStorage : sessionStorage;
-    storage.setItem('auth_time', timestamp);
-    storage.setItem('storage_type', storageType);
-
-    console.log('Starting login with:', {
-      consent,
-      storageType,
-      state,
-      timestamp,
-      storedStates: {
-        local: localStorage.getItem('oauth_state'),
-        session: sessionStorage.getItem('oauth_state')
-      }
-    });
-
     this.http
-      .get<{url: string, sessionId: string}>(`${this.apiUrl}/bnet`, {
+      .get<{url: string, sessionId: string, state: string}>(`${this.apiUrl}/bnet`, {
         params: {
           callback: `${window.location.origin}/auth/callback`,
           consent: consent.toString(),
@@ -119,18 +99,22 @@ export class AuthService {
       .subscribe({
         next: (response) => {
           if (response.url) {
-            // Store the session ID before redirect
+            // Store all auth data in the appropriate storage
             const storage = consent ? localStorage : sessionStorage;
+            storage.setItem('oauth_state', state);
             storage.setItem('session_id', response.sessionId);
-            storage.setItem('initial_state', state);
+            storage.setItem('auth_time', timestamp);
+            storage.setItem('storage_type', storageType);
             
             console.log('Redirecting to auth with:', {
               storageType,
               state,
               sessionId: response.sessionId,
-              storedStates: {
-                local: localStorage.getItem('oauth_state'),
-                session: sessionStorage.getItem('oauth_state')
+              storedData: {
+                oauth_state: storage.getItem('oauth_state'),
+                session_id: storage.getItem('session_id'),
+                auth_time: storage.getItem('auth_time'),
+                storage_type: storage.getItem('storage_type')
               }
             });
             window.location.href = response.url;
@@ -328,7 +312,8 @@ export class AuthService {
       'auth_time',
       'auth_state',
       'storage_type',
-      'session_id'
+      'session_id',
+      'initial_state'
     ];
 
     itemsToClear.forEach(item => {
