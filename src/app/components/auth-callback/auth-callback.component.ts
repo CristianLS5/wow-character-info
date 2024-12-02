@@ -30,28 +30,36 @@ export class AuthCallbackComponent implements OnInit {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
+    const error = urlParams.get('error');
     const sessionId = localStorage.getItem('session_id') || sessionStorage.getItem('session_id');
     const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
+    const initialState = localStorage.getItem('initial_state') || sessionStorage.getItem('initial_state');
 
     console.log('Initial callback params:', {
       code,
       state,
+      error,
       sessionId,
       storageType,
+      initialState,
       storedState: {
         local: localStorage.getItem('oauth_state'),
         session: sessionStorage.getItem('oauth_state')
       }
     });
 
-    if (code && state) {
-      // Try direct callback first
+    if (code && state && state === initialState) {
       this.http.get(`${this.apiUrl}/callback`, {
-        params: { code, state },
+        params: { 
+          code,
+          state,
+          initial_state: initialState
+        },
         withCredentials: true,
         headers: {
           'X-Session-ID': sessionId || '',
-          'X-Storage-Type': storageType || 'session'
+          'X-Storage-Type': storageType || 'session',
+          'X-Initial-State': initialState || ''
         }
       }).pipe(
         catchError(error => {
@@ -63,21 +71,20 @@ export class AuthCallbackComponent implements OnInit {
           console.log('Auth callback response:', response);
           
           if (response.isAuthenticated) {
-            // Store the new session data
             const storage = response.isPersistent ? localStorage : sessionStorage;
             storage.setItem('auth_state', 'true');
             storage.setItem('auth_time', Date.now().toString());
             storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
             storage.setItem('session_id', response.sessionId);
 
-            // Clear oauth state
+            // Clear oauth and initial states
             localStorage.removeItem('oauth_state');
             sessionStorage.removeItem('oauth_state');
+            localStorage.removeItem('initial_state');
+            sessionStorage.removeItem('initial_state');
 
-            // Update auth state in service
             this.authService.updateAuthState(true, response.isPersistent);
 
-            // Navigate to appropriate route
             const lastCharacter = this.characterService.getLastViewedCharacter();
             const targetRoute = lastCharacter
               ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
@@ -101,8 +108,7 @@ export class AuthCallbackComponent implements OnInit {
         }
       });
     } else {
-      const error = urlParams.get('error');
-      this.handleAuthError(urlParams.get('message') || error || 'Missing required OAuth parameters');
+      this.handleAuthError(error || 'Invalid state or missing parameters');
     }
   }
 

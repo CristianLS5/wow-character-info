@@ -108,7 +108,7 @@ export class AuthService {
     this.http
       .get<{url: string, sessionId: string}>(`${this.apiUrl}/bnet`, {
         params: {
-          callback: this.frontendCallbackUrl,
+          callback: `${window.location.origin}/auth/callback`,
           consent: consent.toString(),
           timestamp,
           state,
@@ -122,6 +122,7 @@ export class AuthService {
             // Store the session ID before redirect
             const storage = consent ? localStorage : sessionStorage;
             storage.setItem('session_id', response.sessionId);
+            storage.setItem('initial_state', state);
             
             console.log('Redirecting to auth with:', {
               storageType,
