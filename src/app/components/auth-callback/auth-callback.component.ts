@@ -40,25 +40,42 @@ export class AuthCallbackComponent implements OnInit {
           hasCode: !!params.code,
           hasState: !!params.state,
           error: params.error,
-          errorDescription: params.errorDescription
+          errorDescription: params.errorDescription,
+          storedState: {
+            local: localStorage.getItem('oauth_state'),
+            session: sessionStorage.getItem('oauth_state')
+          }
         });
 
         if (params.error) {
           throw new Error(params.errorDescription || params.error);
         }
-
-        if (!params.code || !params.state) {
-          throw new Error('Missing required OAuth parameters');
-        }
       }),
-      switchMap(params => 
-        this.authService.handleOAuthCallback(params.code, params.state).pipe(
-          catchError(error => {
-            console.error('OAuth callback error:', error);
-            throw error;
-          })
-        )
-      ),
+      switchMap(params => {
+        if (!params.code || !params.state) {
+          // If no code/state, try to get them from the URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const code = urlParams.get('code');
+          const state = urlParams.get('state');
+          
+          if (!code || !state) {
+            throw new Error('Missing required OAuth parameters');
+          }
+          
+          return this.http.get(`${this.apiUrl}/callback`, {
+            params: {
+              code,
+              state
+            },
+            withCredentials: true,
+            headers: {
+              'X-Storage-Type': localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type') || 'session'
+            }
+          });
+        }
+        
+        return this.authService.handleOAuthCallback(params.code, params.state);
+      }),
       switchMap(response => {
         if (response.isAuthenticated) {
           return this.authService.waitForAuthReady().pipe(
