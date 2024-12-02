@@ -27,19 +27,7 @@ export class AuthCallbackComponent implements OnInit {
   ngOnInit() {
     console.log('Auth Callback Initialization');
   
-    // First check if we're on an error redirect
     const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
-    if (error) {
-      console.error('Auth error from URL:', {
-        error,
-        message: urlParams.get('message')
-      });
-      this.handleAuthError(urlParams.get('message') || error);
-      return;
-    }
-
-    // Get code and state directly from URL first
     const code = urlParams.get('code');
     const state = urlParams.get('state');
     const sessionId = localStorage.getItem('session_id') || sessionStorage.getItem('session_id');
@@ -56,65 +44,70 @@ export class AuthCallbackComponent implements OnInit {
       }
     });
 
-    if (!code || !state) {
-      this.handleAuthError('Missing required OAuth parameters');
-      return;
-    }
-
-    // Try direct callback first
-    this.http.get(`${this.apiUrl}/callback`, {
-      params: { code, state },
-      withCredentials: true,
-      headers: {
-        'X-Session-ID': sessionId || '',
-        'X-Storage-Type': storageType || 'session'
-      }
-    }).pipe(
-      catchError(error => {
-        console.error('GET callback failed, trying POST:', error);
-        return this.authService.handleOAuthCallback(code, state);
-      }),
-      switchMap(response => {
-        if (response.isAuthenticated) {
-          return this.authService.waitForAuthReady().pipe(
-            map(() => response)
-          );
+    if (code && state) {
+      // Try direct callback first
+      this.http.get(`${this.apiUrl}/callback`, {
+        params: { code, state },
+        withCredentials: true,
+        headers: {
+          'X-Session-ID': sessionId || '',
+          'X-Storage-Type': storageType || 'session'
         }
-        return of(response);
-      })
-    ).subscribe({
-      next: (response) => {
-        if (response.isAuthenticated) {
-          const storage = response.isPersistent ? localStorage : sessionStorage;
-          storage.setItem('session_id', response.sessionId);
-          storage.setItem('storage_type', response.storageType);
+      }).pipe(
+        catchError(error => {
+          console.error('GET callback failed:', error);
+          throw error;
+        })
+      ).subscribe({
+        next: (response: any) => {
+          console.log('Auth callback response:', response);
           
-          const lastCharacter = this.characterService.getLastViewedCharacter();
-          const targetRoute = lastCharacter
-            ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
-            : '/dashboard';
+          if (response.isAuthenticated) {
+            // Store the new session data
+            const storage = response.isPersistent ? localStorage : sessionStorage;
+            storage.setItem('auth_state', 'true');
+            storage.setItem('auth_time', Date.now().toString());
+            storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
+            storage.setItem('session_id', response.sessionId);
 
-          console.log('Navigation after auth:', {
-            targetRoute,
-            isAuthenticated: this.authService.isAuthenticated(),
-            authInitialized: this.authService.isAuthCheckComplete(),
-            sessionId: response.sessionId,
-            storageType: response.storageType
-          });
+            // Clear oauth state
+            localStorage.removeItem('oauth_state');
+            sessionStorage.removeItem('oauth_state');
 
-          this.router.navigate([targetRoute]);
-        } else {
-          this.handleAuthError('Authentication failed');
+            // Update auth state in service
+            this.authService.updateAuthState(true, response.isPersistent);
+
+            // Navigate to appropriate route
+            const lastCharacter = this.characterService.getLastViewedCharacter();
+            const targetRoute = lastCharacter
+              ? `/${lastCharacter.realm}/${lastCharacter.name}/character`
+              : '/dashboard';
+
+            console.log('Navigation after auth:', {
+              targetRoute,
+              isAuthenticated: true,
+              sessionId: response.sessionId,
+              storageType: response.storageType || storageType
+            });
+
+            this.router.navigate([targetRoute]);
+          } else {
+            this.handleAuthError('Authentication failed');
+          }
+        },
+        error: (error) => {
+          console.error('Auth callback error:', error);
+          this.handleAuthError(error.message || 'Authentication failed');
         }
-      },
-      error: (error) => {
-        console.error('Auth callback error:', error);
-        this.handleAuthError(error.message || 'Authentication failed');
-      }
-    });
+      });
+    } else {
+      const error = urlParams.get('error');
+      this.handleAuthError(urlParams.get('message') || error || 'Missing required OAuth parameters');
+    }
   }
 
   private handleAuthError(message: string) {
+    console.error('Auth error:', message);
     this.router.navigate(['/'], {
       queryParams: {
         error: 'auth_failed',
