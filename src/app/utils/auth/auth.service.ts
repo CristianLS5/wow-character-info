@@ -106,7 +106,7 @@ export class AuthService {
     });
 
     this.http
-      .get(`${this.apiUrl}/bnet`, {
+      .get<{url: string, sessionId: string}>(`${this.apiUrl}/bnet`, {
         params: {
           callback: this.frontendCallbackUrl,
           consent: consent.toString(),
@@ -117,11 +117,16 @@ export class AuthService {
         withCredentials: true
       })
       .subscribe({
-        next: (response: any) => {
+        next: (response) => {
           if (response.url) {
+            // Store the session ID before redirect
+            const storage = consent ? localStorage : sessionStorage;
+            storage.setItem('session_id', response.sessionId);
+            
             console.log('Redirecting to auth with:', {
               storageType,
               state,
+              sessionId: response.sessionId,
               storedStates: {
                 local: localStorage.getItem('oauth_state'),
                 session: sessionStorage.getItem('oauth_state')
@@ -141,10 +146,11 @@ export class AuthService {
   }
 
   handleOAuthCallback(code: string, state: string): Observable<any> {
-    // Check both storages for the state
+    // Check both storages for the state and session ID
     const storedStateLocal = localStorage.getItem('oauth_state');
     const storedStateSession = sessionStorage.getItem('oauth_state');
     const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type') || 'session';
+    const sessionId = localStorage.getItem('session_id') || sessionStorage.getItem('session_id');
 
     console.log('Handling OAuth callback:', {
       code: code ? 'present' : 'missing',
@@ -153,7 +159,8 @@ export class AuthService {
         local: storedStateLocal,
         session: storedStateSession
       },
-      storageType
+      storageType,
+      sessionId
     });
 
     // Check if state matches either storage
@@ -175,7 +182,8 @@ export class AuthService {
           withCredentials: true,
           headers: {
             'Content-Type': 'application/json',
-            'X-Storage-Type': storageType
+            'X-Storage-Type': storageType,
+            'X-Session-ID': sessionId || ''
           },
         }
       )
@@ -192,6 +200,7 @@ export class AuthService {
             storage.setItem('auth_state', 'true');
             storage.setItem('auth_time', Date.now().toString());
             storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
+            storage.setItem('session_id', response.sessionId || sessionId);
 
             // Update auth state
             this.updateAuthState(
