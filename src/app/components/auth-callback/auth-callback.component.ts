@@ -33,7 +33,7 @@ export class AuthCallbackComponent implements OnInit {
     const error = urlParams.get('error');
     const sessionId = localStorage.getItem('session_id') || sessionStorage.getItem('session_id');
     const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
-    const initialState = localStorage.getItem('initial_state') || sessionStorage.getItem('initial_state');
+    const initialState = localStorage.getItem('oauth_state') || sessionStorage.getItem('oauth_state');
 
     console.log('Initial callback params:', {
       code,
@@ -48,12 +48,14 @@ export class AuthCallbackComponent implements OnInit {
       }
     });
 
-    if (code && state && state === initialState) {
+    if (code && state && (state === initialState)) {
       this.http.get(`${this.apiUrl}/callback`, {
         params: { 
           code,
           state,
-          initial_state: initialState
+          initial_state: initialState,
+          session_id: sessionId || '',
+          storage_type: storageType || 'session'
         },
         withCredentials: true,
         headers: {
@@ -77,11 +79,9 @@ export class AuthCallbackComponent implements OnInit {
             storage.setItem('storage_type', response.isPersistent ? 'local' : 'session');
             storage.setItem('session_id', response.sessionId);
 
-            // Clear oauth and initial states
+            // Clear oauth states
             localStorage.removeItem('oauth_state');
             sessionStorage.removeItem('oauth_state');
-            localStorage.removeItem('initial_state');
-            sessionStorage.removeItem('initial_state');
 
             this.authService.updateAuthState(true, response.isPersistent);
 
