@@ -301,7 +301,7 @@ export class AuthService {
     return this.authInitializedSignal;
   }
 
-  private updateAuthState(
+  public updateAuthState(
     isAuthenticated: boolean,
     isPersistent: boolean = false
   ) {
