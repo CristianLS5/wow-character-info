@@ -27,54 +27,52 @@ export class AuthCallbackComponent implements OnInit {
   ngOnInit() {
     console.log('Auth Callback Initialization');
   
-    this.route.queryParams.pipe(
-      take(1),
-      map(params => ({
-        code: params['code'],
-        state: params['state'],
-        error: params['error'],
-        errorDescription: params['error_description']
-      })),
-      tap(params => {
-        console.log('OAuth Callback Params:', {
-          hasCode: !!params.code,
-          hasState: !!params.state,
-          error: params.error,
-          errorDescription: params.errorDescription,
-          storedState: {
-            local: localStorage.getItem('oauth_state'),
-            session: sessionStorage.getItem('oauth_state')
-          }
-        });
+    // First check if we're on an error redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    if (error) {
+      console.error('Auth error from URL:', {
+        error,
+        message: urlParams.get('message')
+      });
+      this.handleAuthError(urlParams.get('message') || error);
+      return;
+    }
 
-        if (params.error) {
-          throw new Error(params.errorDescription || params.error);
-        }
-      }),
-      switchMap(params => {
-        if (!params.code || !params.state) {
-          // If no code/state, try to get them from the URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const code = urlParams.get('code');
-          const state = urlParams.get('state');
-          
-          if (!code || !state) {
-            throw new Error('Missing required OAuth parameters');
-          }
-          
-          return this.http.get(`${this.apiUrl}/callback`, {
-            params: {
-              code,
-              state
-            },
-            withCredentials: true,
-            headers: {
-              'X-Storage-Type': localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type') || 'session'
-            }
-          });
-        }
-        
-        return this.authService.handleOAuthCallback(params.code, params.state);
+    // Get code and state directly from URL first
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const sessionId = localStorage.getItem('session_id') || sessionStorage.getItem('session_id');
+    const storageType = localStorage.getItem('storage_type') || sessionStorage.getItem('storage_type');
+
+    console.log('Initial callback params:', {
+      code,
+      state,
+      sessionId,
+      storageType,
+      storedState: {
+        local: localStorage.getItem('oauth_state'),
+        session: sessionStorage.getItem('oauth_state')
+      }
+    });
+
+    if (!code || !state) {
+      this.handleAuthError('Missing required OAuth parameters');
+      return;
+    }
+
+    // Try direct callback first
+    this.http.get(`${this.apiUrl}/callback`, {
+      params: { code, state },
+      withCredentials: true,
+      headers: {
+        'X-Session-ID': sessionId || '',
+        'X-Storage-Type': storageType || 'session'
+      }
+    }).pipe(
+      catchError(error => {
+        console.error('GET callback failed, trying POST:', error);
+        return this.authService.handleOAuthCallback(code, state);
       }),
       switchMap(response => {
         if (response.isAuthenticated) {
